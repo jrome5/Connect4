@@ -1,8 +1,10 @@
 #pragma once
-#include<vector>
-#include "connect4.h"
 #ifndef TREE_H
 #define TREE_H
+#include<vector>
+#include <cstdlib>
+#include <iostream>
+#include "connect4.h"
 
 typedef connect4::Board state;
 
@@ -49,40 +51,6 @@ struct TreeNode : std::enable_shared_from_this<TreeNode>
         for (auto& child : children)
             if (child->data.action == action)
                 return child;
-    }
-};
-
-class Tree
-{
-    std::shared_ptr<TreeNode> root;
-
-public:
-    Tree(NodeData root_value)
-    {
-        root->data = root_value;
-    }
-
-    Tree()
-    {
-    }
-
-    void InsertNode(std::shared_ptr<TreeNode>& parent, std::shared_ptr<TreeNode>& childNode)
-    {
-        childNode->parent = parent;
-        childNode->hasParent = true;
-        childNode->depth = parent->depth + 1;
-        parent->children.push_back(childNode);
-    }
-
-    void setRoot(std::shared_ptr<TreeNode>& node)
-    {
-        root = node;
-        root->depth = 0;
-    }
-
-    std::shared_ptr<TreeNode>& getRoot()
-    {
-        return root;
     }
 };
 #endif // !TREE_H

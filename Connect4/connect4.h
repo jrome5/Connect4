@@ -1,6 +1,4 @@
 #pragma once
-#include <stdlib.h>  //rand
-#include <vector>
 #include <string>
 
 namespace connect4
@@ -15,7 +13,6 @@ namespace connect4
 	void initializeBoard(Board& board);
 	void dropCoin(Board& board, const int choice, const char coin);
 	void display(const Board board);
-
 	int makeRandomDecision(const Board board);
 	std::vector<int> getAvailableMoves(const Board board);
 	bool checkWinner(const Board board, const char coin);
@@ -25,7 +22,7 @@ namespace connect4
 	bool checkBackDiagonal(const Board board, const char coin);
 	std::string playGame();
 
-	void copyState(Board& s1, const Board& s2)
+	inline void copyState(Board& s1, const Board& s2)
 	{
 		for (int i = 0; i < ROWS; i++)
 			for (int j = 0; j < COLS; j++)

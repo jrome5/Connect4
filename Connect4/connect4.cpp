@@ -1,8 +1,7 @@
 #include <iostream>
 #include <algorithm>
-#include <string>
-#include <iostream>
-
+#include <stdlib.h>  //rand
+#include <vector>
 #include "connect4.h"
 #include "MCTS.h"
 
