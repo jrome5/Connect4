@@ -11,61 +11,78 @@ struct NodeData
     int visited = 0;
     int action = 0;
     state current_state;
-    float reward = 0.0f;
+    int reward = 0;
     bool terminal = false;
     bool fully_expanded = false;
     bool players_turn = false;
 };
 
-struct TreeNode
+struct TreeNode : std::enable_shared_from_this<TreeNode>
 {
-    TreeNode* parent;
+    std::shared_ptr<TreeNode> parent;
     bool hasParent = false;
-    std::vector<TreeNode*> children;
+    std::vector<std::shared_ptr<TreeNode>> children;
     NodeData data;
     int depth = 0;
+
+    TreeNode(NodeData node_data)
+    {
+        data = node_data;
+    }
+
+    ~TreeNode() {
+        //std::cout << "Treetus deletus";
+    };
+
+    std::shared_ptr<TreeNode> addChild(NodeData data)
+    {
+        auto n = std::make_shared<TreeNode>(data);
+        n->parent = std::shared_ptr<TreeNode>(shared_from_this());
+        n->hasParent = true;
+        n->depth = depth + 1;
+        children.emplace_back(n);
+        return n;
+    }
+
+    std::shared_ptr<TreeNode> getChild(const int action)
+    {
+        for (auto& child : children)
+            if (child->data.action == action)
+                return child;
+    }
 };
 
 class Tree
 {
-    TreeNode* root;
+    std::shared_ptr<TreeNode> root;
 
 public:
     Tree(NodeData root_value)
     {
-        root = new TreeNode();
         root->data = root_value;
     }
 
     Tree()
     {
-        root = new TreeNode();
     }
 
-    TreeNode* CreateNode(NodeData data)
+    void InsertNode(std::shared_ptr<TreeNode>& parent, std::shared_ptr<TreeNode>& childNode)
     {
-        TreeNode* node = new TreeNode;
-        node->data = data;
-        return node;
-    }
-
-    void InsertNode(TreeNode* parent, TreeNode* childNode)
-    {
-        parent->children.push_back(childNode);
         childNode->parent = parent;
         childNode->hasParent = true;
         childNode->depth = parent->depth + 1;
+        parent->children.push_back(childNode);
     }
 
-    void setRoot(TreeNode* node)
+    void setRoot(std::shared_ptr<TreeNode>& node)
     {
         root = node;
         root->depth = 0;
     }
 
-    TreeNode& getRoot()
+    std::shared_ptr<TreeNode>& getRoot()
     {
-        return *root;
+        return root;
     }
 };
 #endif // !TREE_H

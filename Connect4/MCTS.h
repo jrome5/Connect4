@@ -4,18 +4,24 @@
 #include "tree.h"
 #include <cmath>
 #include <iostream>
+#include <random>
+#include <cstdlib>
+#include <iostream>
+#include <ctime>
 #ifndef  MCTS_H
 #define MCTS_H
 
 namespace MCTS
 {
 	typedef connect4::Board state;
-	typedef int action;
 
 	class MCTS
 	{
 	public:
-		MCTS(){};
+		MCTS()
+		{
+		};
+
 		~MCTS(){};
 
 		/*
@@ -23,46 +29,44 @@ namespace MCTS
 		* @param state of the game
 		* @return next action
 		*/
-		action search(const action player_action)
+		int search(const state& s)
 		{
-			state s;
-			connect4::initializeBoard(s);
-			connect4::dropCoin(s, player_action, getCoin(true));
+			turns_remaining--;
 			NodeData node_data;
-			node_data.action = player_action;
 			connect4::copyState(node_data.current_state, s);
-			TreeNode* node = traversal_tree.CreateNode(node_data);
-			traversal_tree.setRoot(node);
-			int n = 0;
-			//while (n < computational_limit)
-			//{
-				TreeNode v0 = treePolicy(traversal_tree);
-				auto delta = defaultPolicy(v0);
-				backPropagate(traversal_tree, v0, delta);
-				return delta;
-				//n++;
-			//}
-			//return bestChild(tree.getRoot(), 0).data.action;
+			auto root = std::make_shared<TreeNode>(node_data);
+			num = 0;
+			while (num < computational_limit)
+			{
+				std::shared_ptr<TreeNode> v0 = treePolicy(root);
+				int delta = defaultPolicy(*v0);
+				backPropagate(v0, delta);
+				num++;
+			}
+			int chosen_action = bestChild(root, 0.0f)->data.action;
+			turns_remaining--;
+			return chosen_action;
 		}
 
 	private:
 
-		TreeNode bestChild(const TreeNode& root_node, float c)
+		std::shared_ptr<TreeNode> bestChild(const std::shared_ptr<TreeNode>& root_node, const float c)
 		{
-			int root_visited = root_node.data.visited;
-			TreeNode best;
-			double best_score = 0;
-			for (auto leaf : root_node.children)
+			int root_visited = root_node->data.visited;
+			int best = 0;
+			float best_score = 0.0f;
+			for (unsigned int i = 0; i < root_node->children.size(); i++)
 			{
-				double score = (leaf->data.reward / leaf->data.visited);
-				if (c != 0)
-					score += c * std::sqrt(2 * std::log(root_visited / leaf->data.visited));
-				if (score > best_score)
+				std::shared_ptr<TreeNode> leaf = root_node->children[i];
+				double score = float(leaf->data.reward)/ float(leaf->data.visited);
+				if (c > 0.0f)
+					score += c * std::sqrt(2 * std::log1pf(root_visited / float(leaf->data.visited)));
+				if (score >= best_score)
 				{
-					best = *leaf;
+					best = i;
 				}
 			}
-			return best;
+			return root_node->children[best];
 		}
 
 		/*
@@ -70,155 +74,151 @@ namespace MCTS
 		* @param root_node	
 		* @return new or existing node from tree
 		*/
-		TreeNode treePolicy(Tree& tree)
+		std::shared_ptr<TreeNode> treePolicy(std::shared_ptr<TreeNode>& root)
 		{
-			TreeNode& v = tree.getRoot();
-			while (not v.data.terminal)
+			std::shared_ptr<TreeNode> v = root;
+			while (not isNodeTerminal(*v))
 			{
-				if (not v.data.fully_expanded)
-					return expand(tree, v);
+				if (not v->data.fully_expanded)
+					return expand(v);
 				else
+				{
 					v = bestChild(v, 1.0f / sqrt(2.0f));
+				}
 			}
 			return v;
 		}
 
-		//void calculateState(state& s, TreeNode leaf_node)
-		//{
-		//	//construct list of actions root->leaf
-		//	//proceed to take actions
-		//	//return state
-		//	std::cout << leaf_node.data.action;
-		//	std::vector<action> actions;
-		//	actions.push_back(leaf_node.data.action);
-		//	if (leaf_node.hasParent)
-		//	{
-		//		TreeNode* root = leaf_node.parent;
-		//		while (true)
-		//		{
-		//			actions.push_back(root->data.action);
-		//			if (root->hasParent)
-		//				root = root->parent;
-		//			else
-		//				break;
-		//		}
-		//	}
-		//	connect4::initializeBoard(s);
-		//	bool is_players_turn = true;
-		//	while (actions.size())
-		//	{
-		//		char coin = getCoin(is_players_turn);
-		//		action choice = actions.back();
-		//		actions.pop_back();
-		//		connect4::dropCoin(s, choice, coin);
-		//		is_players_turn = !is_players_turn;
-		//	}
-
-			//connect4::display(s);
-		//}
-
-		action chooseRandomAction(const std::vector<action> available_actions)
+		int chooseRandomAction(const std::vector<int>& available_actions)
 		{
 			if (available_actions.size() == 0)
 			{
 				std::cout << "Somethings wrong. 0 actions available to choose";
-				return -1;
+				std::abort();
 			}
-			const int random_choice = rand() % available_actions.size();
-			return available_actions[random_choice];
+			if (available_actions.size() == 1)
+				return available_actions[0];
+			else
+			{
+				const int limit = available_actions.size();
+				const int random_choice = std::rand() % limit; //from std::rand docs
+				return available_actions[random_choice];
+			}
 		}
 		
-		TreeNode expand(Tree& tree, TreeNode& v)
+		std::shared_ptr<TreeNode> expand(std::shared_ptr<TreeNode>& v)
 		{
 			//choose action 'a' from untried actions
-			std::vector<action> available_actions = connect4::getAvailableMoves(v.data.current_state);
-			for (auto& child : v.children)
-				for (int i = 0; i < available_actions.size(); i++)
-					if (child->data.action = available_actions[i])
-						available_actions.erase(available_actions.begin() + i);
+			std::vector<int> actions = connect4::getAvailableMoves(v->data.current_state);
+			std::vector<int> available_actions;
+			for (unsigned int i = 0; i < actions.size(); i++)
+			{
+				bool found = false;
+				for (const auto& child : v->children)
+				{
+					if (child->data.action == actions[i])
+					{
+						found = true;
+						break;
+					}
+				}
+				if (!found)
+					available_actions.push_back(actions[i]);
+			}
 			//create new leaf node v' of v with action 'a'
-			TreeNode n;
-			action a = chooseRandomAction(available_actions);
-			n.data.action = a;
-			const bool player_turn = (v.depth + 1) % 2 == 0;
-			connect4::copyState(n.data.current_state, v.data.current_state);
-			connect4::dropCoin(n.data.current_state, a, getCoin(player_turn));
+			NodeData n_data;
+			int a = chooseRandomAction(available_actions);
+			n_data.action = a;
+			const bool player_turn = ((v->depth + 1) % 2 == 0);
+			connect4::copyState(n_data.current_state, v->data.current_state);
+			connect4::dropCoin(n_data.current_state, n_data.action, getCoin(player_turn));
 			//add node to tree and return new node
-			isNodeTerminal(n);
-			tree.InsertNode(&v, &n);
+			std::shared_ptr<TreeNode> n = v->addChild(n_data);
+			n->data.players_turn = player_turn;
+			n->data.terminal = isNodeTerminal(*n);
+			v->data.fully_expanded = v->children.size() == actions.size();
 			return n;
 		}
 	
 		/*
-		* @breif Play out the domain from a terminal state to produce an estimate
+		* @brief Play out the domain from a terminal state to produce an estimate
 		* @param initial_state	state of the game
 		* @param v				node 
 		* @return reward for state
 		*/
-		int defaultPolicy(const TreeNode v0)
+		int defaultPolicy(const TreeNode& v0)
 		{
-			/*
-			function DEFAULTPOLICY(s) 
-			while s is non-terminal do 
-			choose a = A(s) uniformly at random 
-			s <- f(s,a) 
-			return reward for state s
-			*/
-			TreeNode v = v0;
-			bool is_terminal = false;
-			while(not v.data.terminal)
+			std::shared_ptr<TreeNode> v = std::make_shared<TreeNode>(v0.data);
+			v->data.players_turn = v0.data.players_turn;
+			v->depth = v0.depth;
+			int i = v->depth;
+			bool draw = false;
+			while(not v->data.terminal)
 			{
-				v.data.players_turn = !v.data.players_turn;
-				std::vector<action> available_actions = connect4::getAvailableMoves(v.data.current_state);
-				v.data.action = chooseRandomAction(available_actions);
-				auto coin = getCoin(v.data.players_turn);
-				connect4::dropCoin(v.data.current_state, v.data.action, coin);
-				v.depth++;
-				v.data.terminal = isNodeTerminal(v);
-				std::cout << v.data.action << " " << v.depth << std::endl;
+				v->data.players_turn = !v->data.players_turn;
+				std::vector<int> available_actions = connect4::getAvailableMoves(v->data.current_state);
+				if (available_actions.size() == 0)
+				{
+					draw = true;
+					break;
+				}
+				v->data.action = chooseRandomAction(available_actions);
+				auto coin = getCoin(v->data.players_turn);
+				connect4::dropCoin(v->data.current_state, v->data.action, coin);
+				v->depth++;
+				v->data.terminal = isNodeTerminal(*v);
 			}
-			std::cout << "terminal node reached";
-			connect4::display(v.data.current_state);
-			std::cout << "last turn " << v.data.action;
-			if (v.depth == 42) //draw
+			if (draw) //draw
 				return 0;
 			else
 			{
-				const bool player_win = (v.depth % 2) == 0;
-				std::cout << player_win;
-				return player_win;
+				const bool player_win = (v->depth % 2) == 0;
+				return player_win ? -1 : 1;
 			}
 		}
 
-		void backPropagate(Tree& tree, TreeNode& leaf_node, const int delta)
+		////UCT backup with two players
+		void backPropagate(std::shared_ptr<TreeNode>& node, int delta)
 		{
-			
+			node->data.visited += 1;
+			node->data.reward += delta;
+			if (!node->hasParent)
+			{
+				return;
+			}
+			else
+			{
+				return backPropagate(node->parent, -delta);
+			}
+		/*	std::shared_ptr<TreeNode> v = node;
+			while (v->hasParent)
+			{
+				v->data.visited += 1;
+				v->data.reward += delta;
+				delta *= -1;
+				v = v->parent;
+			}*/
 		}
-
-		int calculateReward(const bool player_win, const TreeNode leaf_node)
+		
+		bool isNodeTerminal(const TreeNode& leaf_node)
 		{
-			if (player_win != leaf_node.data.players_turn) //XOR
-				return -1*player_win;
-			return player_win;
-		}
-
-		bool isNodeTerminal(TreeNode& leaf_node)
-		{
-			if (leaf_node.depth == 42) //draw condition
+			if (leaf_node.depth >= turns_remaining) //draw condition
 				return true;
-			const char coin = getCoin(leaf_node.data.players_turn);
-			return  connect4::checkWinner(leaf_node.data.current_state, coin);
+			else 
+			{
+				const char coin = getCoin(leaf_node.data.players_turn);
+				return connect4::checkWinner(leaf_node.data.current_state, coin);
+			}
 		}
 
 		char getCoin(const bool players_turn)
 		{
 			return players_turn ? connect4::player_coin : connect4::computer_coin;
 		}
-		
-	private:
-		int computational_limit = 500;
-		Tree traversal_tree;
-		int number_of_turns = 0;
+
+		int computational_limit = 5000;
+		int num = 0;
+		int turns_remaining = 42;
 	};
 }
 #endif // ! MCTS_H

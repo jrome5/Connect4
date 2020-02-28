@@ -62,7 +62,9 @@ namespace connect4
 		std::vector<int> available_moves;
 		for (int j = 0; j < COLS; j++)
 			if (board[ROWS - 1][j] == ' ')
+			{
 				available_moves.push_back(j);
+			}
 		return available_moves;
 	}
 	bool checkWinner(const Board board, const char coin)
@@ -191,7 +193,7 @@ namespace connect4
 			//computer choose
 			players_turn = false;
 			cout << "Computer is choosing";
-			int computer_choice = cpu.search(player_choice);
+			const int computer_choice = cpu.search(board);
 			if (computer_choice == -1)
 			{
 				cout << "this shouldnt happen";
@@ -206,10 +208,11 @@ namespace connect4
 			}
 		}
 	}
-}
+} //end namespace connect4
+
 int main()
 {
-	/*char replay = 'y';
+	char replay = 'y';
 	while (replay == 'y')
 	{
 		const std::string winner = connect4::playGame();
@@ -223,18 +226,21 @@ int main()
 		}
 		cout << "Play again? y/n \n";
 		std::cin >> replay;
-	}*/
-	MCTS::MCTS cpu;
-	connect4::Board board;
-	connect4::initializeBoard(board);
-	connect4::display(board);
-	cout << "Please enter value 0->6\n";
-	int player_choice;
-	std::cin >> player_choice;
-	connect4::dropCoin(board, player_choice, connect4::player_coin);
-	connect4::display(board);
-	//computer choose
-	cout << "Computer is choosing";
-	const int computer_choice = cpu.search(player_choice);
-	return 1;
+	}
+	//MCTS::MCTS cpu;
+	//connect4::Board board;
+	//connect4::initializeBoard(board);
+	//connect4::display(board);
+	//cout << "Please enter value 0->6\n";
+	//int player_choice;
+	//std::cin >> player_choice;
+	//connect4::dropCoin(board, player_choice, connect4::player_coin);
+	//connect4::display(board);
+	////computer choose
+	//cout << "Computer is choosing";
+	//const int computer_choice = cpu.search(player_choice);
+	//connect4::dropCoin(board, computer_choice, connect4::computer_coin);
+	//connect4::display(board);
+	//cout << std::endl << "Computer choice " << computer_choice;
+	//return 1;
 }

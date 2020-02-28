@@ -15,7 +15,8 @@ namespace connect4
 	void initializeBoard(Board& board);
 	void dropCoin(Board& board, const int choice, const char coin);
 	void display(const Board board);
-	int makeRandomDecision(Board board);
+
+	int makeRandomDecision(const Board board);
 	std::vector<int> getAvailableMoves(const Board board);
 	bool checkWinner(const Board board, const char coin);
 	bool checkVertical(const Board board, const char coin);
