@@ -226,20 +226,5 @@ int main()
 		cout << "Play again? y/n \n";
 		std::cin >> replay;
 	}
-	//MCTS::MCTS cpu;
-	//connect4::Board board;
-	//connect4::initializeBoard(board);
-	//connect4::display(board);
-	//cout << "Please enter value 0->6\n";
-	//int player_choice;
-	//std::cin >> player_choice;
-	//connect4::dropCoin(board, player_choice, connect4::player_coin);
-	//connect4::display(board);
-	////computer choose
-	//cout << "Computer is choosing";
-	//const int computer_choice = cpu.search(player_choice);
-	//connect4::dropCoin(board, computer_choice, connect4::computer_coin);
-	//connect4::display(board);
-	//cout << std::endl << "Computer choice " << computer_choice;
-	//return 1;
+	return 0;
 }

@@ -17,7 +17,7 @@ namespace MCTS
 		~MCTS();
 
 		/*
-		* @brief MCTS search.
+		* @brief MCTS search
 		* @param state of the game
 		* @return next action
 		*/
