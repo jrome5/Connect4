@@ -1,9 +1,8 @@
-#include <iostream>
-#include <algorithm>
-#include <stdlib.h>  //rand
-#include <vector>
 #include "connect4.h"
 #include "MCTS.h"
+#include <algorithm>
+#include <iostream>
+#include <stdlib.h>  //rand
 
 using std::cout;
 

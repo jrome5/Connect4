@@ -1,9 +1,9 @@
 #pragma once
 #ifndef  MCTS_H
 #define MCTS_H
-#include <vector>
-#include "tree.h"
 #include "connect4.h"
+#include "tree.h"
+#include <vector>
 
 namespace MCTS
 {

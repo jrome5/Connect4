@@ -1,8 +1,6 @@
 #include "MCTS.h"
 #include <cmath>
-#include <cstdlib>
 #include <iostream>
-#include <ctime>
 
 namespace MCTS
 {
@@ -36,7 +34,7 @@ namespace MCTS
 	{
 		const int root_visited = root_node->data.visited;
 		auto best = root_node->children.front();
-		double best_score = -1; //large num
+		double best_score = 0;
 		for (const auto& leaf: root_node->children)
 		{
 			double score = double(leaf->data.reward) / double(leaf->data.visited);

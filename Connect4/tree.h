@@ -1,10 +1,9 @@
 #pragma once
 #ifndef TREE_H
 #define TREE_H
-#include<vector>
-#include <cstdlib>
-#include <iostream>
 #include "connect4.h"
+#include <iostream>
+#include <vector>
 
 typedef connect4::Board state;
 
@@ -32,9 +31,7 @@ struct TreeNode : std::enable_shared_from_this<TreeNode>
         data = node_data;
     }
 
-    ~TreeNode() {
-        //std::cout << "Treetus deletus";
-    };
+    ~TreeNode() {};
 
     std::shared_ptr<TreeNode> addChild(NodeData data)
     {
