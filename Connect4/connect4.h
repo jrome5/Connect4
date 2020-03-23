@@ -21,7 +21,7 @@ namespace connect4
 	bool checkHorizontal(const Board board, const char coin);
 	bool checkForwardDiagonal(const Board board, const char coin);
 	bool checkBackDiagonal(const Board board, const char coin);
-	std::string playGame();
+	std::string playGame(bool players_turn);
 
 	inline void copyState(Board& s1, const Board& s2)
 	{

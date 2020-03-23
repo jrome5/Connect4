@@ -1,6 +1,4 @@
 #pragma once
-#ifndef TREE_H
-#define TREE_H
 #include "connect4.h"
 #include <iostream>
 #include <vector>
@@ -10,7 +8,7 @@ typedef connect4::Board state;
 struct NodeData
 {
     int visited = 0;
-    int action = 0;
+    int action;
     state current_state;
     int reward = 0;
     bool terminal = false;
@@ -26,19 +24,17 @@ struct TreeNode : std::enable_shared_from_this<TreeNode>
     NodeData data;
     int depth = 0;
 
-    TreeNode(NodeData node_data)
+    TreeNode(const NodeData& node_data)
     {
         data = node_data;
     }
-
-    ~TreeNode() {};
 
     std::shared_ptr<TreeNode> addChild(NodeData data)
     {
         auto n = std::make_shared<TreeNode>(data);
         n->parent = std::shared_ptr<TreeNode>(shared_from_this());
         n->hasParent = true;
-        n->depth = depth + 1;
+        n->depth = n->parent->depth++;
         children.emplace_back(n);
         return n;
     }
@@ -50,4 +46,3 @@ struct TreeNode : std::enable_shared_from_this<TreeNode>
                 return child;
     }
 };
-#endif // !TREE_H

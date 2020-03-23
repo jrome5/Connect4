@@ -1,32 +1,30 @@
 #include "MCTS.h"
 #include <cmath>
 #include <iostream>
+#include <time.h>
+#include <algorithm>
+#include <limits>
 
 namespace MCTS
 {
-	MCTS::MCTS()
-	{
-	}
-	MCTS::~MCTS()
-	{
-	}
+	constexpr int infinite = std::numeric_limits<int>::max();
 
-	int MCTS::search(const state& s)
+	int MCTS::search(const state& s, const int remaining)
 	{
-		turns_remaining--;
+		turns_remaining = remaining;
 		NodeData node_data;
 		connect4::copyState(node_data.current_state, s);
 		std::shared_ptr<TreeNode> root = std::make_shared<TreeNode>(node_data);
-		int num = 0;
-		while (num < computational_limit)
+		time_t start = time(0);
+		double seconds_since_start = 0.0;
+		while(seconds_since_start < 5)
 		{
 			std::shared_ptr<TreeNode> v0 = treePolicy(root);
 			const int delta = defaultPolicy(*v0);
 			backPropagate(v0, delta);
-			num++;
+			seconds_since_start = difftime(time(0), start);
 		}
 		int chosen_action = bestChild(root, 0.0)->data.action;
-		turns_remaining--;
 		return chosen_action;
 	}
 
@@ -39,7 +37,10 @@ namespace MCTS
 		{
 			double score = double(leaf->data.reward) / double(leaf->data.visited);
 			if (c > 0.0)
-				score += c * std::sqrt((2.0 * double(std::log1p(root_visited)) / double(leaf->data.visited)));
+			{
+				const auto q = 2.0 * (std::log1p(double(root_visited)));
+				score += c * std::sqrt(q / double(leaf->data.visited));
+			}
 			if (score > best_score)
 			{
 				best = leaf;
@@ -88,16 +89,10 @@ namespace MCTS
 		std::vector<int> available_actions;
 		for (unsigned int i = 0; i < actions.size(); i++)
 		{
-			bool found = false;
-			for (const auto& child : v->children)
-			{
-				if (child->data.action == actions[i])
-				{
-					found = true;
-					break;
-				}
-			}
-			if (!found)
+			const auto itr = std::find_if(std::begin(v->children), std::end(v->children), [&](const std::shared_ptr<TreeNode>& obj)
+				{ return obj->data.action == actions[i]; });
+			const auto found = itr != std::end(v->children);
+			if(!found)
 				available_actions.push_back(actions[i]);
 		}
 		//create new leaf node v' of v with action 'a'
@@ -116,30 +111,33 @@ namespace MCTS
 
 	int MCTS::defaultPolicy(const TreeNode& v0)
 	{
-		std::shared_ptr<TreeNode> v = std::make_shared<TreeNode>(v0.data);
-		v->data.players_turn = v0.data.players_turn;
-		v->depth = v0.depth;
-		while (not v->data.terminal)
+		TreeNode v = v0;
+		std::vector<int> moves;
+		while (not v.data.terminal)
 		{
-			v->data.players_turn = !v->data.players_turn;
-			std::vector<int> available_actions = connect4::getAvailableMoves(v->data.current_state);
+			v.data.players_turn = !v.data.players_turn;
+			std::vector<int> available_actions = connect4::getAvailableMoves(v.data.current_state);
 			if (available_actions.size() == 0)
 			{
-				connect4::display(v->data.current_state);
+				//connect4::display(v.data.current_state);
+				v.depth = turns_remaining;
 				break;
 			}
-			v->data.action = chooseRandomAction(available_actions);
-			auto coin = getCoin(v->data.players_turn);
-			connect4::dropCoin(v->data.current_state, v->data.action, coin);
-			v->depth++;
-			v->data.terminal = isNodeTerminal(*v);
+			const int action = chooseRandomAction(available_actions);
+			moves.push_back(action);
+			const auto coin = getCoin(v.data.players_turn);
+			connect4::dropCoin(v.data.current_state, action, coin);
+			v.depth += 1;
+			v.data.terminal = isNodeTerminal(v);
 		}
-		const bool player_win = ((v->depth % 2) == 0);
-		const bool draw = turns_remaining == v->depth;
+		const bool node_win = (v0.data.players_turn == v.data.players_turn); //
+		const int reward = (turns_remaining - v.depth);
+		const bool draw = (reward == 0);
 		if (draw)
 			return 0;
 		else
-			return player_win ? -1 : 1;
+			return node_win ? reward : -reward;
+	}
 	}
 
 	void MCTS::backPropagate(std::shared_ptr<TreeNode>& node, int delta)
@@ -155,7 +153,7 @@ namespace MCTS
 
 	bool MCTS::isNodeTerminal(const TreeNode& leaf_node)
 	{
-		if (leaf_node.depth == turns_remaining) //draw condition
+		if (leaf_node.depth == (turns_remaining-1)) //draw condition
 			return true;
 		else
 		{

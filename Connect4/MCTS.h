@@ -1,6 +1,4 @@
 #pragma once
-#ifndef  MCTS_H
-#define MCTS_H
 #include "connect4.h"
 #include "tree.h"
 #include <vector>
@@ -12,16 +10,12 @@ namespace MCTS
 	class MCTS
 	{
 	public:
-		MCTS();
-
-		~MCTS();
-
 		/*
 		* @brief MCTS search
 		* @param state of the game
 		* @return next action
 		*/
-		int search(const state& s);
+		int search(const state& s, const int remaining);
 
 	private:
 
@@ -57,8 +51,6 @@ namespace MCTS
 			return players_turn ? connect4::player_coin : connect4::computer_coin;
 		}
 
-		int computational_limit = 5000;
 		int turns_remaining = 42;
 	};
 }
-#endif // ! MCTS_H
