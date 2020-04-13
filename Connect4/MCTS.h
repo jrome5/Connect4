@@ -17,7 +17,7 @@ namespace MCTS
 		*/
 		int search(const state& s, const int remaining);
 
-	private:
+	protected:
 
 		std::shared_ptr<TreeNode> bestChild(const std::shared_ptr<TreeNode>& root_node, const double c);
 
@@ -39,17 +39,12 @@ namespace MCTS
 		* @param v				node 
 		* @return reward for state
 		*/
-		int defaultPolicy(const TreeNode& v0);
+		int defaultPolicy(const std::shared_ptr<TreeNode> v0);
 
 		////UCT backup with two players
 		void backPropagate(std::shared_ptr<TreeNode>& node, int delta);
 		
-		bool isNodeTerminal(const TreeNode& leaf_node);
-		
-		char getCoin(const bool players_turn)
-		{
-			return players_turn ? connect4::player_coin : connect4::computer_coin;
-		}
+		int calculateReward(const TreeNode leaf, const bool node_win);
 
 		int turns_remaining = 42;
 	};

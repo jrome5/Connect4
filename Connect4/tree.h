@@ -19,7 +19,6 @@ struct NodeData
 struct TreeNode : std::enable_shared_from_this<TreeNode>
 {
     std::shared_ptr<TreeNode> parent;
-    bool hasParent = false;
     std::vector<std::shared_ptr<TreeNode>> children;
     NodeData data;
     int depth = 0;
@@ -29,14 +28,28 @@ struct TreeNode : std::enable_shared_from_this<TreeNode>
         data = node_data;
     }
 
-    std::shared_ptr<TreeNode> addChild(NodeData data)
+    std::shared_ptr<TreeNode> addChild(const int action, bool add_parent=true)
     {
-        auto n = std::make_shared<TreeNode>(data);
-        n->parent = std::shared_ptr<TreeNode>(shared_from_this());
-        n->hasParent = true;
-        n->depth = n->parent->depth++;
-        children.emplace_back(n);
-        return n;
+        NodeData data;
+        data.action = action;
+        auto child = std::make_shared<TreeNode>(data);
+        if (add_parent)
+        {
+            child->parent = std::shared_ptr<TreeNode>(shared_from_this());
+        }
+        child->depth = this->depth++;
+        child->data.players_turn = !this->data.players_turn;
+        connect4::copyState(child->data.current_state, this->data.current_state);
+        connect4::dropCoin(child->data.current_state, child->data.action, connect4::getCoin(child->data.players_turn));
+        child->data.terminal = isNodeTerminal(child);
+        children.emplace_back(child);
+        return child;
+    }
+
+    bool isNodeTerminal(const std::shared_ptr<TreeNode>& node)
+    {
+        const char coin = connect4::getCoin(node->data.players_turn);
+        return connect4::checkWinner(node->data.current_state, coin);
     }
 
     std::shared_ptr<TreeNode> getChild(const int action)
