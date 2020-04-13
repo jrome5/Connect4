@@ -13,15 +13,20 @@ namespace connect4
 
 	void initializeBoard(Board& board);
 	void dropCoin(Board& board, const int choice, const char coin);
-	void display(const Board board);
-	int makeRandomDecision(const Board board);
-	std::vector<int> getAvailableMoves(const Board board);
-	bool checkWinner(const Board board, const char coin);
-	bool checkVertical(const Board board, const char coin);
-	bool checkHorizontal(const Board board, const char coin);
-	bool checkForwardDiagonal(const Board board, const char coin);
-	bool checkBackDiagonal(const Board board, const char coin);
-	std::string playGame(bool players_turn);
+	void display(const Board& board);
+	int makeRandomDecision(const Board& board);
+	std::vector<int> getAvailableMoves(const Board& board);
+	bool checkWinner(const Board& board, const char coin);
+	bool checkVertical(const Board& board, const char coin);
+	bool checkHorizontal(const Board& board, const char coin);
+	bool checkForwardDiagonal(const Board& board, const char coin);
+	bool checkBackDiagonal(const Board& board, const char coin);
+	int playGame();
+
+	inline char getCoin(const bool players_turn)
+	{
+		return players_turn ? connect4::player_coin : connect4::computer_coin;
+	}
 
 	inline void copyState(Board& s1, const Board& s2)
 	{

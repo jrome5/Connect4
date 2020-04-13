@@ -2,6 +2,7 @@
 #include "MCTS.h"
 #include <iostream>
 #include <stdlib.h>  //rand
+#include <fstream>
 
 using std::cout;
 int plays = 0;
@@ -31,7 +32,7 @@ namespace connect4
 		}
 	}
 
-	void display(const Board board)
+	void display(const Board& board)
 	{
 		system("cls");
 		cout << " 0   1   2   3   4   5   6\n";
@@ -46,7 +47,7 @@ namespace connect4
 		}
 	}
 
-	int makeRandomDecision(const Board board)
+	int makeRandomDecision(const Board& board)
 	{
 		std::vector<int> available_moves = getAvailableMoves(board);
 		if (available_moves.size() == 0)
@@ -57,7 +58,7 @@ namespace connect4
 		return available_moves[random_choice];
 	}
 
-	std::vector<int> getAvailableMoves(const Board board)
+	std::vector<int> getAvailableMoves(const Board& board)
 	{
 		std::vector<int> available_moves;
 		for (int j = 0; j < COLS; j++)
@@ -68,7 +69,7 @@ namespace connect4
 		return available_moves;
 	}
 
-	bool checkMoveValid(const Board board, const int player_move)
+	bool checkMoveValid(const Board& board, const int player_move)
 	{
 		const auto available_moves = getAvailableMoves(board);
 		for (auto move : available_moves)
@@ -79,7 +80,7 @@ namespace connect4
 		return false;
 	}
 
-	bool checkWinner(const Board board, const char coin)
+	bool checkWinner(const Board& board, const char coin)
 	{
 		if (checkVertical(board, coin))
 			return true;
@@ -92,7 +93,7 @@ namespace connect4
 		return false;
 	}
 
-	bool checkForwardDiagonal(const Board board, const char coin)
+	bool checkForwardDiagonal(const Board& board, const char coin)
 	{
 		for (int i = 0; i < ROWS - 3; i++)
 		{
@@ -107,7 +108,7 @@ namespace connect4
 		}
 		return false;
 	}
-	bool checkBackDiagonal(const Board board, const char coin)
+	bool checkBackDiagonal(const Board& board, const char coin)
 	{
 		for (int i = 0; i < ROWS - 3; i++)
 		{
@@ -123,7 +124,7 @@ namespace connect4
 		return false;
 	}
 
-	bool checkHorizontal(const Board board, const char coin)
+	bool checkHorizontal(const Board& board, const char coin)
 	{
 		for (int i = 0; i < ROWS; i++)
 		{
@@ -147,7 +148,7 @@ namespace connect4
 		return false;
 	}
 
-	bool checkVertical(const Board board, const char coin)
+	bool checkVertical(const Board& board, const char coin)
 	{
 		for (int j = 0; j < COLS; j++)
 		{
@@ -175,7 +176,7 @@ namespace connect4
 		return false;
 	}
 
-	std::string playGame(bool player_first)
+	int playGame()
 	{
 		Board board;
 		initializeBoard(board);
@@ -186,32 +187,30 @@ namespace connect4
 		MCTS::MCTS cpu;
 		while (true)
 		{
-			if (player_first)
+			if (coin_count == MAX_COINS)
 			{
-				if (coin_count == MAX_COINS)
-				{
-					return "draw";
-				}
-				//player choose
-				players_turn = true;
-				cout << "Please enter value 0->6\n";
-				int player_choice = 0;// makeRandomDecision(board);
-				bool move_valid = false;
-				while (!move_valid)
-				{
-					std::cin >> player_choice;
-					cout << "Invalid move, please enter value 0->6" << std::endl;
-					move_valid = checkMoveValid(board, player_choice);
-				}
-				dropCoin(board, player_choice, player_coin);
-				coin_count++;
-				display(board);
-				if (checkWinner(board, player_coin))
-				{
-					random_wins++;
-					return "player";
-				}
+				return 0;
 			}
+			//player choose
+			players_turn = true;
+			//cout << "Please enter value 0->6\n";
+			int player_choice = makeRandomDecision(board);
+			bool move_valid = false;
+	/*		while (!move_valid)
+			{
+				std::cin >> player_choice;
+				cout << "Invalid move, please enter value 0->6" << std::endl;
+				move_valid = checkMoveValid(board, player_choice);
+			}*/
+			dropCoin(board, player_choice, player_coin);
+			coin_count++;
+			display(board);
+			if (checkWinner(board, player_coin))
+			{
+				random_wins++;
+				return -1;
+			}
+		
 
 			//computer choose
 			players_turn = false;
@@ -221,7 +220,7 @@ namespace connect4
 			if (computer_choice == -1)
 			{
 				cout << "this shouldnt happen";
-				return "draw";
+				return 0;
 			}
 			dropCoin(board, computer_choice, computer_coin);
 			coin_count++;
@@ -229,29 +228,40 @@ namespace connect4
 			if (checkWinner(board, computer_coin))
 			{
 				mcts_wins++;
-				return "computer";
+				return 1;
 			}
-			player_first = true;
 		}
 	}
 } //end namespace connect4
 
 int main()
 {
-	char replay = 'y';
-	while (replay == 'y')
+	std::ofstream results_file;
+	results_file.open("MCTS vs random 100 plays.csv");
+	results_file << "Game, Win, Draw, Loss\n";
+	//char replay = 'y';
+	for(int i = 0; i < 100; i++)
 	{
-		const std::string winner = connect4::playGame(false);
-		if (winner == "draw")
+		const auto winner = connect4::playGame();
+		switch (winner)
 		{
-			cout << "Draw. No winner.";
+			case -1:
+				results_file << i << ",0,0,1\n";
+				break;
+			case 1:
+				results_file << i << ",1,0,0\n";
+				break;
+			default:
+				results_file << i << ",0,1,0\n";
+				break;
 		}
-		else
+		if (i % 10)
 		{
-			cout << "The winner is " << winner << "!!!\n";
+			results_file.close();
+			results_file.open("MCTS vs random 100 plays.csv");
 		}
-		cout << "Play again? y/n \n";
-		std::cin >> replay;
+	//	cout << "Play again? y/n \n";
+		//std::cin >> replay;
 	}
 	return 0;
 }
