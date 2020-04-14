@@ -28,6 +28,19 @@ struct TreeNode : std::enable_shared_from_this<TreeNode>
         data = node_data;
     }
 
+    void remove()
+    { 
+        if (children.size())
+        {
+            for (auto& child : children)
+            {
+                child->remove();
+                child.reset();
+            }
+        }
+        parent.reset();
+    }
+
     std::shared_ptr<TreeNode> addChild(const int action, bool add_parent=true)
     {
         NodeData data;
@@ -37,8 +50,8 @@ struct TreeNode : std::enable_shared_from_this<TreeNode>
         {
             child->parent = std::shared_ptr<TreeNode>(shared_from_this());
         }
-        child->depth = this->depth++;
-        child->data.players_turn = !this->data.players_turn;
+        child->depth = this->depth+1;
+        child->data.players_turn = !(this->data.players_turn);
         connect4::copyState(child->data.current_state, this->data.current_state);
         connect4::dropCoin(child->data.current_state, child->data.action, connect4::getCoin(child->data.players_turn));
         child->data.terminal = isNodeTerminal(child);

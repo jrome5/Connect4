@@ -10,6 +10,10 @@ namespace MCTS
 	class MCTS
 	{
 	public:
+
+		MCTS() {};
+
+		virtual ~MCTS() {};
 		/*
 		* @brief MCTS search
 		* @param state of the game

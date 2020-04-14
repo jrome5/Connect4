@@ -15,7 +15,7 @@ namespace MCTS
 		const auto N = double(root.data.visited);
 		for (const auto& child : root.children)
 		{
-			const auto percent = double(child->data.visited) / N;
+			const auto percent = 100* double(child->data.visited) / N;
 			const auto avg = double(child->data.reward) / double(child->data.visited);
 			std::cout << child->data.action << "- Visited: " << percent << "% Avg: " << avg << std::endl;
 		}
@@ -29,7 +29,7 @@ namespace MCTS
 		std::shared_ptr<TreeNode> root = std::make_shared<TreeNode>(node_data);
 		const time_t start = time(0);
 		double seconds_since_start = 0.0;
-		while(seconds_since_start < 10.0)
+		while(seconds_since_start < 5.0)
 		{
 			std::shared_ptr<TreeNode> v0 = treePolicy(root);
 			const int delta = defaultPolicy(v0);
@@ -37,7 +37,8 @@ namespace MCTS
 			seconds_since_start = difftime(time(0), start);
 		}
 		const int chosen_action = bestChild(root, 0.0)->data.action;
-		//outputDistribution(*root);
+//		outputDistribution(*root);
+		root->remove();
 		return chosen_action;
 	}
 
@@ -49,7 +50,7 @@ namespace MCTS
 			std::abort();
 		}
 		auto best = root_node->children.front();
-		double best_score = 0;
+		double best_score = -infinite;
 		for (const auto& child: root_node->children)
 		{
 			double score = double(child->data.reward) / double(child->data.visited);
