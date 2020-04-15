@@ -6,8 +6,10 @@ namespace MCTS
 	class DecisiveMCTS : public MCTS
 	{
 	protected:
-		int defaultPolicy(const std::shared_ptr<TreeNode> v0);
 
+		std::shared_ptr<TreeNode> expand(std::shared_ptr<TreeNode>& v);
+
+		int defaultPolicy(const std::shared_ptr<TreeNode> v0);
 	};
 }
 
