@@ -1,13 +1,12 @@
 #include "connect4.h"
 #include "MCTS.h"
+#include "DecisiveMCTS.h"
 #include <iostream>
 #include <stdlib.h>  //rand
 #include <fstream>
 
 using std::cout;
-int plays = 0;
-int random_wins = 0;
-int mcts_wins = 0;
+int plays;
 
 namespace connect4
 {
@@ -35,6 +34,7 @@ namespace connect4
 	void display(const Board& board)
 	{
 		system("cls");
+		cout << "Game No: " << plays << std::endl;
 		cout << " 0   1   2   3   4   5   6\n";
 		for (int i = ROWS - 1; i >= 0; i--)
 		{
@@ -181,53 +181,36 @@ namespace connect4
 		Board board;
 		initializeBoard(board);
 		display(board);
-		int coin_count = 0;
-		bool no_winner = true;
-		bool players_turn = false;
-		MCTS::MCTS cpu;
+		int coin_count = 42;
+		MCTS::MCTS base;
+		MCTS::DecisiveMCTS modified;
 		while (true)
 		{
-			if (coin_count == MAX_COINS)
+			if (coin_count == 0)
 			{
 				return 0;
 			}
-			//player choose
-			players_turn = true;
-			//cout << "Please enter value 0->6\n";
-			int player_choice = makeRandomDecision(board);
+			//base choose
+			cout << "Base is choosing";
+			int base_choice = base.search(board, coin_count);
 			bool move_valid = false;
-	/*		while (!move_valid)
-			{
-				std::cin >> player_choice;
-				cout << "Invalid move, please enter value 0->6" << std::endl;
-				move_valid = checkMoveValid(board, player_choice);
-			}*/
-			dropCoin(board, player_choice, player_coin);
-			coin_count++;
+			dropCoin(board, base_choice, player_coin);
+			coin_count--;
 			display(board);
 			if (checkWinner(board, player_coin))
 			{
-				random_wins++;
 				return -1;
 			}
 		
 
-			//computer choose
-			players_turn = false;
-			cout << "Computer is choosing";
-			const int turns_remaining = MAX_COINS - coin_count;
-			const int computer_choice = cpu.search(board, turns_remaining);
-			if (computer_choice == -1)
-			{
-				cout << "this shouldnt happen";
-				return 0;
-			}
+			//mod choose
+			cout << "Modified is choosing";
+			const int computer_choice = modified.search(board, coin_count);
 			dropCoin(board, computer_choice, computer_coin);
-			coin_count++;
+			coin_count--;
 			display(board);
 			if (checkWinner(board, computer_coin))
 			{
-				mcts_wins++;
 				return 1;
 			}
 		}
@@ -237,11 +220,13 @@ namespace connect4
 int main()
 {
 	std::ofstream results_file;
-	results_file.open("MCTS vs random 100 plays.csv");
+	const auto file_name = "MCTS 2s vs DecisiveMCTS 2s 100 plays.csv";
+	results_file.open(file_name, std::ios::app);
+	results_file << "MCTS first\n";
 	results_file << "Game, Win, Draw, Loss\n";
-	//char replay = 'y';
 	for(int i = 0; i < 100; i++)
 	{
+		plays = i;
 		const auto winner = connect4::playGame();
 		switch (winner)
 		{
@@ -255,13 +240,12 @@ int main()
 				results_file << i << ",0,1,0\n";
 				break;
 		}
-		if (i % 10)
+		if (i % 10 == 0)
 		{
 			results_file.close();
 			results_file.open("MCTS vs random 100 plays.csv");
 		}
-	//	cout << "Play again? y/n \n";
-		//std::cin >> replay;
 	}
+	results_file.close();
 	return 0;
 }
