@@ -1,5 +1,7 @@
 #include "connect4.h"
 #include "MCTS.h"
+#include "RootParallelisation.h"
+#include "LeafParallelization.h"
 #include <iostream>
 #include <stdlib.h>  //rand
 #include <fstream>
@@ -185,7 +187,7 @@ namespace connect4
 		int coin_count = 0;
 		bool no_winner = true;
 		bool players_turn = false;
-		MCTS::MCTS cpu;
+		MCTS::LeafParallelization cpu;
 		while (true)
 		{
 			if (coin_count == MAX_COINS)

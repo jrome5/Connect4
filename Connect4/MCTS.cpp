@@ -14,7 +14,7 @@ namespace MCTS
 		const auto N = double(root.data.visited);
 		for (const auto& child : root.children)
 		{
-			const auto percent = 100* double(child->data.visited) / N;
+			const auto percent = 100 * double(child->data.visited) / N;
 			const auto avg = double(child->data.reward) / double(child->data.visited);
 			std::cout << child->data.action << "- Visited: " << percent << "% Avg: " << avg << std::endl;
 		}
@@ -31,12 +31,12 @@ namespace MCTS
 		while(iterations < computational_limit)
 		{
 			std::shared_ptr<TreeNode> v0 = treePolicy(root);
-			const int delta = defaultPolicy(v0);
+			const auto delta = defaultPolicy(v0);
 			backPropagate(v0, delta);
 			iterations++;
 		}
 		const int chosen_action = bestChild(root, 0.0)->data.action;
-//		outputDistribution(*root);
+		//		outputDistribution(*root);
 		root->remove();
 		return chosen_action;
 	}
@@ -50,7 +50,7 @@ namespace MCTS
 		}
 		auto best = root_node->children.front();
 		double best_score = -infinite;
-		for (const auto& child: root_node->children)
+		for (const auto& child : root_node->children)
 		{
 			double score = double(child->data.reward) / double(child->data.visited);
 			if (c > 0.0)
@@ -84,23 +84,6 @@ namespace MCTS
 		return v;
 	}
 
-	int MCTS::chooseRandomAction(const std::vector<int>& available_actions)
-	{
-		if (available_actions.size() == 0)
-		{
-			std::cout << "Something's wrong. 0 actions available to choose";
-			std::abort();
-		}
-		if (available_actions.size() == 1)
-			return available_actions.front();
-		else
-		{
-			const int limit = available_actions.size();
-			const int random_choice = std::rand() % limit; //from std::rand docs
-			return available_actions[random_choice];
-		}
-	}
-
 	std::shared_ptr<TreeNode> MCTS::expand(std::shared_ptr<TreeNode>& v)
 	{
 		//choose action 'a' from untried actions
@@ -111,7 +94,7 @@ namespace MCTS
 			const auto itr = std::find_if(v->children.cbegin(), v->children.cend(), [&](const std::shared_ptr<TreeNode>& obj)
 				{ return obj->data.action == actions[i]; });
 			const auto found = itr != v->children.cend();
-			if(!found)
+			if (!found)
 				available_actions.push_back(actions[i]);
 		}
 		if (available_actions.size() == 0)
@@ -130,7 +113,7 @@ namespace MCTS
 		}
 	}
 
-	int MCTS::defaultPolicy(const std::shared_ptr<TreeNode> v0)
+	float MCTS::defaultPolicy(const std::shared_ptr<TreeNode> v0)
 	{
 		auto v = *v0;
 		std::vector<int> moves;
@@ -146,27 +129,44 @@ namespace MCTS
 			v = *v.addChild(action, false);
 			v.data.terminal = (v.data.terminal or v.depth == turns_remaining);
 		}
-		const bool node_win = (v0->data.players_turn == v.data.players_turn); 
-		return calculateReward(v, node_win);
+		const bool node_win = (v0->data.players_turn == v.data.players_turn);
+		return calculateReward(v, node_win, turns_remaining);
 	}
 
-	void MCTS::backPropagate(std::shared_ptr<TreeNode>& node, int delta)
+	void MCTS::backPropagate(std::shared_ptr<TreeNode>& node, float delta)
 	{
 		node->data.visited += 1;
 		node->data.reward += delta;
-		if(node->parent)
+		if (node->parent)
 		{
 			backPropagate(node->parent, -delta);
 		}
 		return;
 	}
 
-	int MCTS::calculateReward(const TreeNode leaf, const bool node_win)
+	int calculateReward(const TreeNode leaf, const bool node_win, const int turns_remaining)
 	{
 		const bool draw = (turns_remaining == leaf.depth);
 		if (draw)
 			return 0;
 		else
 			return node_win ? 1 : -1;
+	}
+
+	int chooseRandomAction(const std::vector<int>& available_actions)
+	{
+		if (available_actions.size() == 0)
+		{
+			std::cout << "Something's wrong. 0 actions available to choose";
+			std::abort();
+		}
+		if (available_actions.size() == 1)
+			return available_actions.front();
+		else
+		{
+			const int limit = available_actions.size();
+			const int random_choice = std::rand() % limit; //from std::rand docs
+			return available_actions[random_choice];
+		}
 	}
 }

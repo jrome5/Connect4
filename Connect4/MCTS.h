@@ -31,8 +31,6 @@ namespace MCTS
 		* @return new or existing node from tree
 		*/
 		std::shared_ptr<TreeNode> treePolicy(std::shared_ptr<TreeNode>& root);
-
-		int chooseRandomAction(const std::vector<int>& available_actions);
 		
 		std::shared_ptr<TreeNode> expand(std::shared_ptr<TreeNode>& v);
 		
@@ -43,13 +41,15 @@ namespace MCTS
 		* @param v				node 
 		* @return reward for state
 		*/
-		int defaultPolicy(const std::shared_ptr<TreeNode> v0);
+		float defaultPolicy(const std::shared_ptr<TreeNode> v0);
 
 		////UCT backup with two players
-		void backPropagate(std::shared_ptr<TreeNode>& node, int delta);
-		
-		int calculateReward(const TreeNode leaf, const bool node_win);
+		void backPropagate(std::shared_ptr<TreeNode>& node, float delta);
 
-		int turns_remaining = 42;
+		int turns_remaining;
 	};
+
+	int calculateReward(const TreeNode leaf, const bool node_win, const int turns_remaining);
+
+	int chooseRandomAction(const std::vector<int>& available_actions);
 }
