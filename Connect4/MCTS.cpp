@@ -32,7 +32,7 @@ namespace MCTS
 		while(seconds_since_start < 5.0)
 		{
 			std::shared_ptr<TreeNode> v0 = treePolicy(root);
-			const int delta = defaultPolicy(v0);
+			const auto delta = defaultPolicy(v0);
 			backPropagate(v0, delta);
 			seconds_since_start = difftime(time(0), start);
 		}
@@ -151,7 +151,7 @@ namespace MCTS
 		return calculateReward(v, node_win);
 	}
 
-	void MCTS::backPropagate(std::shared_ptr<TreeNode>& node, int delta)
+	void MCTS::backPropagate(std::shared_ptr<TreeNode>& node, const float delta)
 	{
 		node->data.visited += 1;
 		node->data.reward += delta;

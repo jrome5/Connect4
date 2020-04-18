@@ -46,7 +46,7 @@ namespace MCTS
 		int defaultPolicy(const std::shared_ptr<TreeNode> v0);
 
 		////UCT backup with two players
-		void backPropagate(std::shared_ptr<TreeNode>& node, int delta);
+		virtual void backPropagate(std::shared_ptr<TreeNode>& node, const float delta);
 		
 		int calculateReward(const TreeNode leaf, const bool node_win);
 

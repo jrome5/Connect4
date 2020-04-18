@@ -10,7 +10,7 @@ struct NodeData
     int visited = 0;
     int action;
     state current_state;
-    int reward = 0;
+    float reward = 0.0f;
     bool terminal = false;
     bool fully_expanded = false;
     bool players_turn = false;
