@@ -3,11 +3,12 @@
 #include <iostream>
 #include <stdlib.h>  //rand
 #include <fstream>
+#include <time.h>
+#include <numeric>
 
 using std::cout;
 int plays = 0;
-int random_wins = 0;
-int mcts_wins = 0;
+std::vector<double> computation_times;
 
 namespace connect4
 {
@@ -35,6 +36,7 @@ namespace connect4
 	void display(const Board& board)
 	{
 		system("cls");
+		cout << "Game No: " << plays << std::endl;
 		cout << " 0   1   2   3   4   5   6\n";
 		for (int i = ROWS - 1; i >= 0; i--)
 		{
@@ -191,32 +193,33 @@ namespace connect4
 			{
 				return 0;
 			}
+
 			//player choose
 			players_turn = true;
 			//cout << "Please enter value 0->6\n";
 			int player_choice = makeRandomDecision(board);
 			bool move_valid = false;
-	/*		while (!move_valid)
-			{
-				std::cin >> player_choice;
-				cout << "Invalid move, please enter value 0->6" << std::endl;
-				move_valid = checkMoveValid(board, player_choice);
-			}*/
+			/*		while (!move_valid)
+					{
+						std::cin >> player_choice;
+						cout << "Invalid move, please enter value 0->6" << std::endl;
+						move_valid = checkMoveValid(board, player_choice);
+					}*/
 			dropCoin(board, player_choice, player_coin);
 			coin_count++;
 			display(board);
 			if (checkWinner(board, player_coin))
 			{
-				random_wins++;
 				return -1;
 			}
-		
 
 			//computer choose
 			players_turn = false;
 			cout << "Computer is choosing";
 			const int turns_remaining = MAX_COINS - coin_count;
+			const time_t start = time(0); //record move time
 			const int computer_choice = cpu.search(board, turns_remaining);
+			computation_times.push_back(difftime(time(0), start));
 			if (computer_choice == -1)
 			{
 				cout << "this shouldnt happen";
@@ -227,9 +230,8 @@ namespace connect4
 			display(board);
 			if (checkWinner(board, computer_coin))
 			{
-				mcts_wins++;
 				return 1;
-			}
+			}	
 		}
 	}
 } //end namespace connect4
@@ -237,31 +239,50 @@ namespace connect4
 int main()
 {
 	std::ofstream results_file;
-	results_file.open("MCTS vs random 100 plays.csv");
-	results_file << "Game, Win, Draw, Loss\n";
+	const auto filename = "Test MCTS.csv";
+	results_file.open(filename, std::ios::app);
+	results_file << "Random first\n";
+	results_file << "Game, Win, Draw, Loss, Avg Comp Time\n";
 	//char replay = 'y';
+	if (not results_file.is_open())
+	{
+		std::cout << "Cannot write to file";
+		return 0;
+	}
 	for(int i = 0; i < 100; i++)
 	{
+		if (not results_file.is_open())
+		{
+			std::cout << "Cannot write to file";
+			return 0;
+		}
+		plays = i;
+		results_file << i;
 		const auto winner = connect4::playGame();
 		switch (winner)
 		{
 			case -1:
-				results_file << i << ",0,0,1\n";
+				results_file << ",0,0,1,";
 				break;
 			case 1:
-				results_file << i << ",1,0,0\n";
+				results_file << ",1,0,0,";
 				break;
 			default:
-				results_file << i << ",0,1,0\n";
+				results_file << ",0,1,0,";
 				break;
 		}
-		if (i % 10)
+		for (const double time : computation_times)
+		{
+			results_file << time << ",";
+		}
+		results_file << std::endl;
+
+		if (plays % 10 == 0)
 		{
 			results_file.close();
-			results_file.open("MCTS vs random 100 plays.csv");
+			results_file.open(filename, std::ios::app);
 		}
-	//	cout << "Play again? y/n \n";
-		//std::cin >> replay;
+		computation_times.clear();
 	}
 	return 0;
 }

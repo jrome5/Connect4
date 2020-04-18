@@ -1,7 +1,6 @@
 #include "MCTS.h"
 #include <cmath>
 #include <iostream>
-#include <time.h>
 #include <algorithm>
 #include <limits>
 
@@ -27,14 +26,14 @@ namespace MCTS
 		NodeData node_data;
 		connect4::copyState(node_data.current_state, s);
 		std::shared_ptr<TreeNode> root = std::make_shared<TreeNode>(node_data);
-		const time_t start = time(0);
-		double seconds_since_start = 0.0;
-		while(seconds_since_start < 5.0)
+		const int computational_limit = 10000;
+		int iterations = 0;
+		while(iterations < computational_limit)
 		{
 			std::shared_ptr<TreeNode> v0 = treePolicy(root);
 			const int delta = defaultPolicy(v0);
 			backPropagate(v0, delta);
-			seconds_since_start = difftime(time(0), start);
+			iterations++;
 		}
 		const int chosen_action = bestChild(root, 0.0)->data.action;
 //		outputDistribution(*root);
