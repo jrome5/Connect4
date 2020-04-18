@@ -43,12 +43,12 @@ namespace MCTS
 		* @param v				node 
 		* @return reward for state
 		*/
-		int defaultPolicy(const std::shared_ptr<TreeNode> v0);
+		virtual float defaultPolicy(const std::shared_ptr<TreeNode> v0);
 
 		////UCT backup with two players
 		virtual void backPropagate(std::shared_ptr<TreeNode>& node, const float delta);
 		
-		int calculateReward(const TreeNode leaf, const bool node_win);
+		virtual float calculateReward(const TreeNode leaf, const bool node_win);
 
 		int turns_remaining = 42;
 	};

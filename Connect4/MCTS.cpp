@@ -131,7 +131,7 @@ namespace MCTS
 		}
 	}
 
-	int MCTS::defaultPolicy(const std::shared_ptr<TreeNode> v0)
+	float MCTS::defaultPolicy(const std::shared_ptr<TreeNode> v0)
 	{
 		auto v = *v0;
 		std::vector<int> moves;
@@ -162,7 +162,7 @@ namespace MCTS
 		return;
 	}
 
-	int MCTS::calculateReward(const TreeNode leaf, const bool node_win)
+	float MCTS::calculateReward(const TreeNode leaf, const bool node_win)
 	{
 		const bool draw = (turns_remaining == leaf.depth);
 		if (draw)
