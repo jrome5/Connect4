@@ -24,7 +24,7 @@ namespace MCTS
 	{
 		turns_remaining = remaining;
 		NodeData node_data;
-		connect4::copyState(node_data.current_state, s);
+		node_data.current_state = s;
 		std::shared_ptr<TreeNode> root = std::make_shared<TreeNode>(node_data);
 		const int computational_limit = 10000;
 		int iterations = 0;
@@ -104,7 +104,7 @@ namespace MCTS
 	std::shared_ptr<TreeNode> MCTS::expand(std::shared_ptr<TreeNode>& v)
 	{
 		//choose action 'a' from untried actions
-		std::vector<int> actions = connect4::getAvailableMoves(v->data.current_state);
+		std::vector<int> actions = v->data.current_state.getAvailableMoves();
 		std::vector<int> available_actions;
 		for (auto i = 0; i < actions.size(); i++)
 		{
@@ -137,7 +137,7 @@ namespace MCTS
 		while (not v.data.terminal)
 		{
 			v.data.players_turn = !v.data.players_turn;
-			std::vector<int> available_actions = connect4::getAvailableMoves(v.data.current_state);
+			std::vector<int> available_actions = v.data.current_state.getAvailableMoves();
 			if (available_actions.size() == 0)
 			{
 				return 0;

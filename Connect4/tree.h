@@ -52,8 +52,8 @@ struct TreeNode : std::enable_shared_from_this<TreeNode>
         }
         child->depth = this->depth+1;
         child->data.players_turn = !(this->data.players_turn);
-        connect4::copyState(child->data.current_state, this->data.current_state);
-        connect4::dropCoin(child->data.current_state, child->data.action, connect4::getCoin(child->data.players_turn));
+        child->data.current_state = this->data.current_state;
+        child->data.current_state.dropCoin(child->data.action, connect4::getCoin(child->data.players_turn));
         child->data.terminal = isNodeTerminal(child);
         children.emplace_back(child);
         return child;
@@ -62,7 +62,7 @@ struct TreeNode : std::enable_shared_from_this<TreeNode>
     bool isNodeTerminal(const std::shared_ptr<TreeNode>& node)
     {
         const char coin = connect4::getCoin(node->data.players_turn);
-        return connect4::checkWinner(node->data.current_state, coin);
+        return node->data.current_state.checkWinner(coin);
     }
 
     std::shared_ptr<TreeNode> getChild(const int action)

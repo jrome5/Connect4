@@ -6,21 +6,29 @@ namespace connect4
 {
 	const int COLS = 7;
 	const int ROWS = 6;
-	typedef char Board[ROWS][COLS];
 	constexpr auto MAX_COINS = ROWS * COLS;
 	constexpr char player_coin = char(254);
 	constexpr char computer_coin = char(79);
 
-	void initializeBoard(Board& board);
-	void dropCoin(Board& board, const int choice, const char coin);
-	void display(const Board& board);
+	class Board
+	{
+	public:
+		Board();
+
+		void dropCoin(const int choice, const char coin);
+		void display();
+		std::vector<int> getAvailableMoves() const;
+		bool checkMoveValid(const int player_move);
+		bool checkWinner(const char coin);
+		bool checkVertical(const char coin);
+		bool checkHorizontal(const char coin);
+		bool checkForwardDiagonal(const char coin);
+		bool checkBackDiagonal(const char coin);
+
+		char data[ROWS][COLS];
+	};
+
 	int makeRandomDecision(const Board& board);
-	std::vector<int> getAvailableMoves(const Board& board);
-	bool checkWinner(const Board& board, const char coin);
-	bool checkVertical(const Board& board, const char coin);
-	bool checkHorizontal(const Board& board, const char coin);
-	bool checkForwardDiagonal(const Board& board, const char coin);
-	bool checkBackDiagonal(const Board& board, const char coin);
 	int playGame();
 
 	inline char getCoin(const bool players_turn)
@@ -28,10 +36,10 @@ namespace connect4
 		return players_turn ? connect4::player_coin : connect4::computer_coin;
 	}
 
-	inline void copyState(Board& s1, const Board& s2)
-	{
-		for (int i = 0; i < ROWS; i++)
-			for (int j = 0; j < COLS; j++)
-				s1[i][j] = s2[i][j];
-	}
+	//inline void copyState(Board& s1, const Board& s2)
+	//{
+	//	for (int i = 0; i < ROWS; i++)
+	//		for (int j = 0; j < COLS; j++)
+	//			s1[i][j] = s2[i][j];
+	//}
 } // end namespace connect4
