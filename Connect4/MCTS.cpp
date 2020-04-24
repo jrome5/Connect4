@@ -3,6 +3,8 @@
 #include <iostream>
 #include <algorithm>
 #include <limits>
+#include <time.h>
+#include <stdlib.h>
 
 namespace MCTS
 {
@@ -22,6 +24,7 @@ namespace MCTS
 
 	int MCTS::search(const state& s, const int remaining)
 	{
+		srand((unsigned)time(0));
 		turns_remaining = remaining;
 		NodeData node_data;
 		node_data.current_state = s;

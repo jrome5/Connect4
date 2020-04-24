@@ -17,7 +17,7 @@ namespace MCTS
 	void *threadFunction(void *i)
 	{
 		RootParallelisation cpu;
-		cpu.threadSearch(search_trees[(int)i]);
+		cpu.threadSearch(search_trees[(int)i], (int)i);
 		pthread_exit(NULL);
 		return NULL;
 	}
@@ -37,6 +37,7 @@ namespace MCTS
 		pthread_attr_init(&attr);
 		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 		//create threads and run tree searches
+		search_trees.reserve(NUM_THREADS);
 		for (int i = 0; i < NUM_THREADS; i++)
 		{
 			std::shared_ptr<TreeNode> thread_root = std::make_shared<TreeNode>(node_data);
@@ -89,8 +90,9 @@ namespace MCTS
 		return master_tree;
 	}
 
-	void RootParallelisation::threadSearch(std::shared_ptr<TreeNode> root)
+	void RootParallelisation::threadSearch(std::shared_ptr<TreeNode> root, const int random_seed)
 	{
+		srand((unsigned)time(0) + random_seed);
 		const int computational_limit = 10000;
 		int num = 0;
 		while (num < computational_limit)
