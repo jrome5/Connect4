@@ -2,8 +2,18 @@
 #include "connect4.h"
 #include <iostream>
 #include <vector>
+#include <unordered_map>
 
 typedef connect4::Board state;
+
+template <>
+struct std::hash<state>
+{
+    size_t operator()(const state& k) const noexcept
+    {
+       return std::hash<std::string>{}(k.getDataAsString());
+    }
+};
 
 struct NodeData
 {
@@ -18,7 +28,7 @@ struct NodeData
 
 struct TreeNode : std::enable_shared_from_this<TreeNode>
 {
-    std::shared_ptr<TreeNode> parent;
+    std::vector<std::shared_ptr<TreeNode>> parents;
     std::vector<std::shared_ptr<TreeNode>> children;
     NodeData data;
     int depth = 0;
@@ -38,7 +48,30 @@ struct TreeNode : std::enable_shared_from_this<TreeNode>
                 child.reset();
             }
         }
-        parent.reset();
+        for(auto& parent : parents)
+            parent.reset();
+    }
+
+    std::shared_ptr<TreeNode> addChildTransposition(std::unordered_map<state, std::shared_ptr<TreeNode>>& state_map, const int action, bool add_parent = true)
+    {
+        state new_state = this->data.current_state;
+        new_state.dropCoin(action, connect4::getCoin(not this->data.players_turn));
+        auto state_it = state_map.find(new_state);
+        if (state_it != state_map.end())
+        {
+            auto node = state_it->second;
+            node->parents.emplace_back(std::shared_ptr<TreeNode>(shared_from_this()));
+            children.emplace_back(node);
+            return node;
+        }
+        else
+        {
+            //create new node
+            auto child = addChild(action, add_parent);
+            //add new node to map
+            state_map.emplace(new_state, child);
+            return child;
+        }
     }
 
     std::shared_ptr<TreeNode> addChild(const int action, bool add_parent=true)
@@ -48,7 +81,7 @@ struct TreeNode : std::enable_shared_from_this<TreeNode>
         auto child = std::make_shared<TreeNode>(data);
         if (add_parent)
         {
-            child->parent = std::shared_ptr<TreeNode>(shared_from_this());
+            child->parents.emplace_back(std::shared_ptr<TreeNode>(shared_from_this()));
         }
         child->depth = this->depth+1;
         child->data.players_turn = !(this->data.players_turn);

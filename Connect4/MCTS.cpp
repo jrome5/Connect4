@@ -154,9 +154,9 @@ namespace MCTS
 	{
 		node->data.visited += 1;
 		node->data.reward += delta;
-		if(node->parent)
+		for(auto& parent : node->parents)
 		{
-			backPropagate(node->parent, -delta);
+			backPropagate(parent, -delta);
 		}
 		return;
 	}

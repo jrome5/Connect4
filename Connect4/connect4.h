@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <iostream>
 
 namespace connect4
 {
@@ -25,11 +26,34 @@ namespace connect4
 		bool checkForwardDiagonal(const char coin);
 		bool checkBackDiagonal(const char coin);
 
+		std::string getDataAsString() const
+		{
+			std::string data_as_string = "";
+			for (const auto row : data)
+			{
+				std::string string_row(row);
+				data_as_string += string_row;
+			}
+			return data_as_string;
+		}
+
 		char data[ROWS][COLS];
+
+
 	};
 
 	int makeRandomDecision(const Board& board);
 	int playGame();
+
+	inline bool operator==(const Board& lhs, const Board& rhs)
+	{
+		for (int i = 0; i < ROWS; i++)
+		{
+			if (lhs.data[i] != rhs.data[i])
+				return false;
+		}
+		return true;
+	}
 
 	inline char getCoin(const bool players_turn)
 	{

@@ -1,5 +1,6 @@
 #include "connect4.h"
 #include "MCTS.h"
+#include "TranspositionMCTS.h"
 #include <iostream>
 #include <stdlib.h>  //rand
 #include <fstream>
@@ -183,9 +184,10 @@ namespace connect4
 		Board board;
 		board.display();
 		int coin_count = 0;
-		bool no_winner = true;
-		bool players_turn = false;
-		MCTS::MCTS cpu;
+		MCTS::MCTS base;
+		MCTS::TranspositionMCTS mod;
+		int turns_remaining;
+
 		while (true)
 		{
 			if (coin_count == MAX_COINS)
@@ -193,32 +195,10 @@ namespace connect4
 				return 0;
 			}
 
-			//player choose
-			players_turn = true;
-			//cout << "Please enter value 0->6\n";
-			int player_choice = makeRandomDecision(board);
-			bool move_valid = false;
-			/*		while (!move_valid)
-					{
-						std::cin >> player_choice;
-						cout << "Invalid move, please enter value 0->6" << std::endl;
-						move_valid = checkMoveValid(board, player_choice);
-					}*/
-			board.dropCoin(player_choice, player_coin);
-			coin_count++;
-			board.display();
-			if (board.checkWinner(player_coin))
-			{
-				return -1;
-			}
-
 			//computer choose
-			players_turn = false;
-			cout << "Computer is choosing";
-			const int turns_remaining = MAX_COINS - coin_count;
-			const time_t start = time(0); //record move time
-			const int computer_choice = cpu.search(board, turns_remaining);
-			computation_times.push_back(difftime(time(0), start));
+			cout << "Base is choosing";
+			int turns_remaining = MAX_COINS - coin_count;
+			const int computer_choice = base.search(board, turns_remaining);
 			if (computer_choice == -1)
 			{
 				cout << "this shouldnt happen";
@@ -229,6 +209,25 @@ namespace connect4
 			board.display();
 			if (board.checkWinner(computer_coin))
 			{
+				return -1;
+			}
+
+			//computer choose
+			cout << "Mod is choosing";
+			turns_remaining = MAX_COINS - coin_count;
+			const time_t start = time(0); //record move time
+			const int mod_choice = mod.search(board, turns_remaining);
+			computation_times.push_back(difftime(time(0), start));
+			if (mod_choice == -1)
+			{
+				cout << "this shouldnt happen";
+				return 0;
+			}
+			board.dropCoin(mod_choice, player_coin);
+			coin_count++;
+			board.display();
+			if (board.checkWinner(player_coin))
+			{
 				return 1;
 			}	
 		}
@@ -238,9 +237,9 @@ namespace connect4
 int main()
 {
 	std::ofstream results_file;
-	const auto filename = "Test MCTS.csv";
+	const auto filename = "Test Transposition.csv";
 	results_file.open(filename, std::ios::app);
-	results_file << "Random first\n";
+	results_file << "Base first\n";
 	results_file << "Game, Win, Draw, Loss, Avg Comp Time\n";
 	//char replay = 'y';
 	if (not results_file.is_open())

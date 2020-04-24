@@ -19,7 +19,7 @@ namespace MCTS
 		* @param state of the game
 		* @return next action
 		*/
-		int search(const state& s, const int remaining);
+		virtual int search(const state& s, const int remaining);
 
 	protected:
 
@@ -34,7 +34,7 @@ namespace MCTS
 
 		int chooseRandomAction(const std::vector<int>& available_actions);
 		
-		std::shared_ptr<TreeNode> expand(std::shared_ptr<TreeNode>& v);
+		virtual std::shared_ptr<TreeNode> expand(std::shared_ptr<TreeNode>& v);
 		
 	
 		/*
@@ -46,7 +46,7 @@ namespace MCTS
 		int defaultPolicy(const std::shared_ptr<TreeNode> v0);
 
 		////UCT backup with two players
-		void backPropagate(std::shared_ptr<TreeNode>& node, int delta);
+		virtual void backPropagate(std::shared_ptr<TreeNode>& node, int delta);
 		
 		int calculateReward(const TreeNode leaf, const bool node_win);
 
