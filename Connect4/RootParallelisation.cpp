@@ -9,15 +9,25 @@
 
 #define NUM_THREADS 4
 
+typedef struct ThreadStruct
+{
+	int index;
+	int remaining;
+
+//	ThreadStruct(const int i, const int r) : index(i), remaining(r) {}
+};
+
 namespace MCTS
 {
 	constexpr int infinite = std::numeric_limits<int>::max();
 	std::vector<std::shared_ptr<TreeNode>> search_trees;
 
-	void *threadFunction(void *i)
+	void *threadFunction(void *t)
 	{
+		ThreadStruct* data = static_cast<ThreadStruct*>(t);
 		RootParallelisation cpu;
-		cpu.threadSearch(search_trees[(int)i], (int)i);
+
+		cpu.threadSearch(search_trees[data->index], data->remaining, data->index);
 		pthread_exit(NULL);
 		return NULL;
 	}
@@ -38,11 +48,14 @@ namespace MCTS
 		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 		//create threads and run tree searches
 		search_trees.reserve(NUM_THREADS);
+		ThreadStruct thread_data[NUM_THREADS];
 		for (int i = 0; i < NUM_THREADS; i++)
 		{
 			std::shared_ptr<TreeNode> thread_root = std::make_shared<TreeNode>(node_data);
 			search_trees.push_back(thread_root);
-			rc = pthread_create(&threads[i], &attr, threadFunction, (void*)i);
+			thread_data[i].index = i;
+			thread_data[i].remaining = remaining;
+			rc = pthread_create(&threads[i], &attr, threadFunction, &thread_data[i]);
 			if (rc) {
 				std::cout << "Error: unable to create thread," << rc << std::endl;
 				exit(-1);
@@ -90,8 +103,9 @@ namespace MCTS
 		return master_tree;
 	}
 
-	void RootParallelisation::threadSearch(std::shared_ptr<TreeNode> root, const int random_seed)
+	void RootParallelisation::threadSearch(std::shared_ptr<TreeNode> root, const int remaining, const int random_seed)
 	{
+		turns_remaining = remaining;
 		srand((unsigned)time(0) + random_seed);
 		const int computational_limit = 10000;
 		int num = 0;
