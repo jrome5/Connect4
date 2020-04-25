@@ -1,8 +1,8 @@
-#include "LeafParallelization.h"
+#include "LeafParallelisation.h"
 #include <pthread.h>
 #include <numeric>
 
-#define NUM_THREADS 4
+#define NUM_THREADS 2
 
 namespace MCTS
 {
@@ -22,17 +22,16 @@ namespace MCTS
 			}
 			const int action = chooseRandomAction(available_actions);
 			v = *v.addChild(action, false);
-			v.data.terminal = (v.data.terminal or v.depth == turns_remaining);
+			v.data.terminal = (v.data.terminal or v.depth == MAX_TURNS);
 		}
 		const bool node_win = (leaf_node->data.players_turn == v.data.players_turn);
-		*((int*)i) = calculateReward(v, node_win, turns_remaining);
+		*((int*)i) = calculateReward(v, node_win);
 		pthread_exit(i);
 	}
 
-	float LeafParallelization::defaultPolicy(const std::shared_ptr<TreeNode> v0)
+	float LeafParallelisation::defaultPolicy(const std::shared_ptr<TreeNode> v0)
 	{
 		int simulation_results[NUM_THREADS];
-		std::fill_n(simulation_results, NUM_THREADS, turns_remaining); //initialize this array with the turns remaining to be passed
 		//create threads
 		pthread_t threads[NUM_THREADS];
 		pthread_attr_t attr;

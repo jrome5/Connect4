@@ -22,13 +22,13 @@ namespace MCTS
 		}
 	}
 
-	int MCTS::search(const state& s, const int remaining)
+	int MCTS::search(const state& s, const int turn)
 	{
 		srand((unsigned)time(0));
-		turns_remaining = remaining;
 		NodeData node_data;
 		node_data.current_state = s;
 		std::shared_ptr<TreeNode> root = std::make_shared<TreeNode>(node_data);
+		root->depth = turn;
 		const int computational_limit = 10000;
 		int iterations = 0;
 		while(iterations < computational_limit)
@@ -110,7 +110,7 @@ namespace MCTS
 			//create new leaf node v' of v with action 'a'
 			//add node to tree and return new node
 			std::shared_ptr<TreeNode> n = v->addChild(chooseRandomAction(available_actions));
-			n->data.terminal = (n->data.terminal or n->depth == turns_remaining);
+			n->data.terminal = (n->data.terminal or n->depth == MAX_TURNS);
 			v->data.fully_expanded = v->children.size() == actions.size();
 			return n;
 		}
@@ -130,10 +130,10 @@ namespace MCTS
 			}
 			const int action = chooseRandomAction(available_actions);
 			v = *v.addChild(action, false);
-			v.data.terminal = (v.data.terminal or v.depth == turns_remaining);
+			v.data.terminal = (v.data.terminal or v.depth == MAX_TURNS);
 		}
 		const bool node_win = (v0->data.players_turn == v.data.players_turn);
-		return calculateReward(v, node_win, turns_remaining);
+		return calculateReward(v, node_win);
 	}
 
 	void MCTS::backPropagate(std::shared_ptr<TreeNode>& node, float delta)
@@ -147,9 +147,9 @@ namespace MCTS
 		return;
 	}
 
-	int calculateReward(const TreeNode leaf, const bool node_win, const int turns_remaining)
+	int calculateReward(const TreeNode leaf, const bool node_win)
 	{
-		const bool draw = (turns_remaining == leaf.depth);
+		const bool draw = (leaf.depth == MAX_TURNS);
 		if (draw)
 			return 0;
 		else

@@ -3,7 +3,7 @@
 
 namespace MCTS
 {
-	class LeafParallelization : public MCTS
+	class LeafParallelisation : public MCTS
 	{
 	private:
 		/*
@@ -12,6 +12,6 @@ namespace MCTS
 		* @param v				node
 		* @return the average reward for from the threads
 		*/
-		float defaultPolicy(const std::shared_ptr<TreeNode> v0);
+		float defaultPolicy(const std::shared_ptr<TreeNode> v0) override;
 	};
 }

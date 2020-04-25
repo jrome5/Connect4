@@ -10,7 +10,7 @@ namespace MCTS
 	public:
 		int search(const state& s, const int remaining);
 
-		void threadSearch(std::shared_ptr<TreeNode> root, const int remaining, const int random_seed);
+		void threadSearch(std::shared_ptr<TreeNode> root, const int random_seed);
 
 	private:
 		std::shared_ptr<TreeNode> createMasterTree();

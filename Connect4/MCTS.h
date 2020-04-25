@@ -19,7 +19,7 @@ namespace MCTS
 		* @param state of the game
 		* @return next action
 		*/
-		int search(const state& s, const int remaining);
+		int search(const state& s, const int turn);
 
 	protected:
 
@@ -33,23 +33,22 @@ namespace MCTS
 		std::shared_ptr<TreeNode> treePolicy(std::shared_ptr<TreeNode>& root);
 		
 		std::shared_ptr<TreeNode> expand(std::shared_ptr<TreeNode>& v);
-		
-	
-		/*
-		* @brief Play out the domain from a terminal state to produce an estimate
-		* @param initial_state	state of the game
-		* @param v				node 
-		* @return reward for state
-		*/
-		float defaultPolicy(const std::shared_ptr<TreeNode> v0);
 
 		////UCT backup with two players
 		void backPropagate(std::shared_ptr<TreeNode>& node, float delta);
 
-		int turns_remaining;
+		/*
+		* @brief Play out the domain from a terminal state to produce an estimate
+		* @param initial_state	state of the game
+		* @param v				node
+		* @return reward for state
+		*/
+		virtual float defaultPolicy(const std::shared_ptr<TreeNode> v0);
 	};
 
-	int calculateReward(const TreeNode leaf, const bool node_win, const int turns_remaining);
+	int calculateReward(const TreeNode leaf, const bool node_win);
 
 	int chooseRandomAction(const std::vector<int>& available_actions);
+
+	const int MAX_TURNS = 42;
 }
