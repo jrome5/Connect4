@@ -1,7 +1,8 @@
 #include "connect4.h"
 #include "MCTS.h"
 #include "RootParallelisation.h"
-#include "LeafParallelization.h"
+#include "LeafParallelisation.h"
+#include "LocalMutexMCTS.h"
 #include <iostream>
 #include <stdlib.h>  //rand
 #include <fstream>
@@ -186,15 +187,14 @@ namespace connect4
 		board.display();
 		int coin_count = 0;
 		int choice;
-		int turns_remaining = 42;
+		int max_turns = 42;
 		MCTS::MCTS base;
-		MCTS::RootParallelisation mod;
-		while (turns_remaining)
+		while (coin_count < max_turns)
 		{
 			//mod choose
-			//cout << "Mod is choosing";
+			cout << "Mod is choosing";
 			const time_t start = time(0); //record move time
-			choice = mod.search(board, turns_remaining);
+			choice = MCTS::LocalMutexMCTS::search(board, coin_count);
 			computation_times.push_back(difftime(time(0), start));
 			if (choice == -1)
 			{
@@ -202,24 +202,24 @@ namespace connect4
 				return 0;
 			}
 			board.dropCoin(choice, player_coin);
-			turns_remaining--;
-		//	board.display();
+			coin_count++;
+			board.display();
 			if (board.checkWinner(player_coin))
 			{
 				return 1;
 			}
 		//	cout << turns_remaining;
 			//base choose
-		//	cout << "Base is choosing";
-			choice = base.search(board, turns_remaining);
+			cout << "Base is choosing";
+			choice = base.search(board, coin_count);
 			if (choice == -1)
 			{
 				cout << "this shouldnt happen";
 				return 0;
 			}
 			board.dropCoin(choice, computer_coin);
-			turns_remaining--;
-		//	board.display();
+			coin_count++;
+			board.display();
 			if (board.checkWinner(computer_coin))
 			{
 				return -1;
@@ -234,7 +234,7 @@ int main()
 	std::ofstream results_file;
 	const auto filename = "Test Root Parellisation.csv";
 	results_file.open(filename, std::ios::app);
-	results_file << "Mod first 4 threads\n";
+	results_file << "Mod first 2 threads\n";
 	results_file << "Game, Win, Draw, Loss, Avg Comp Time\n";
 	//char replay = 'y';
 	if (not results_file.is_open())
