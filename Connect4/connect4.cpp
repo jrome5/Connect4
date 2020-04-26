@@ -189,12 +189,13 @@ namespace connect4
 		int choice;
 		int max_turns = 42;
 		MCTS::MCTS base;
+		MCTS::LeafParallelisation mod;
 		while (coin_count < max_turns)
 		{
 			//mod choose
 			cout << "Mod is choosing";
 			const time_t start = time(0); //record move time
-			choice = MCTS::LocalMutexMCTS::search(board, coin_count);
+			choice =mod.search(board, coin_count);
 			computation_times.push_back(difftime(time(0), start));
 			if (choice == -1)
 			{
