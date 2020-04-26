@@ -2,19 +2,19 @@
 #include <pthread.h>
 #include <numeric>
 
-#define NUM_THREADS 2
+#define NUM_THREADS 4
 
 namespace MCTS
 {
+	int simulation_results;
 	std::shared_ptr<TreeNode> leaf_node;
-	void* threadRollout(void* i)
+
+	void* threadRollout(void* args)
 	{
-		const int turns_remaining = (int)i;
+		srand((unsigned)time(0) + int(args));
 		TreeNode v = *leaf_node;
-		std::vector<int> moves;
 		while (not v.data.terminal)
 		{
-			v.data.players_turn = !v.data.players_turn;
 			std::vector<int> available_actions = v.data.current_state.getAvailableMoves();
 			if (available_actions.size() == 0)
 			{
@@ -25,13 +25,15 @@ namespace MCTS
 			v.data.terminal = (v.data.terminal or v.depth == MAX_TURNS);
 		}
 		const bool node_win = (leaf_node->data.players_turn == v.data.players_turn);
-		*((int*)i) = calculateReward(v, node_win);
-		pthread_exit(i);
+		simulation_results += calculateReward(v, node_win);
+		v.remove();
+		return NULL;
 	}
 
 	float LeafParallelisation::defaultPolicy(const std::shared_ptr<TreeNode> v0)
 	{
-		int simulation_results[NUM_THREADS];
+		leaf_node = v0;
+		simulation_results = 0;
 		//create threads
 		pthread_t threads[NUM_THREADS];
 		pthread_attr_t attr;
@@ -43,7 +45,7 @@ namespace MCTS
 		//create threads and run tree searches
 		for (int i = 0; i < NUM_THREADS; i++)
 		{
-			rc = pthread_create(&threads[i], &attr, threadRollout, &simulation_results[i]);
+			rc = pthread_create(&threads[i], &attr, threadRollout, (void*) i);
 			if (rc) {
 				std::cout << "Error: unable to create thread," << rc << std::endl;
 				exit(-1);
@@ -57,9 +59,11 @@ namespace MCTS
 				exit(-1);
 			}
 		}
-
-		const float total_reward = std::accumulate(std::begin(simulation_results), std::end(simulation_results), 0);
-		const float average_reward = total_reward / NUM_THREADS;
+		//std::cout << simulation_results << std::endl;
+		const float average_reward = simulation_results / NUM_THREADS;
+		delete attr;
+		delete status;
+		leaf_node.reset();
 		return average_reward;
 	}
 }
