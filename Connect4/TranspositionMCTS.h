@@ -11,6 +11,6 @@ namespace MCTS
 
 		std::shared_ptr<TreeNode> expand(std::shared_ptr<TreeNode>& v) override;
 
-		std::unordered_map<connect4::Board, std::shared_ptr<TreeNode>> transposition_table_;
+		std::unordered_map<connect4::Board, std::shared_ptr<TreeNode>, KeyHasher> transposition_table_;
 	};
 }

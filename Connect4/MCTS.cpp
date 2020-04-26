@@ -3,6 +3,7 @@
 #include <iostream>
 #include <algorithm>
 #include <limits>
+#include <time.h>
 
 namespace MCTS
 {
@@ -23,6 +24,7 @@ namespace MCTS
 	int MCTS::search(const state& s, const int remaining)
 	{
 		turns_remaining = remaining;
+		srand((unsigned)time(0));
 		NodeData node_data;
 		node_data.current_state = s;
 		std::shared_ptr<TreeNode> root = std::make_shared<TreeNode>(node_data);

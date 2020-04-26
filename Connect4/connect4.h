@@ -28,12 +28,10 @@ namespace connect4
 
 		std::string getDataAsString() const
 		{
-			std::string data_as_string = "";
-			for (const auto row : data)
-			{
-				std::string string_row(row);
-				data_as_string += string_row;
-			}
+			std::string data_as_string;
+			for (int i = 0; i < ROWS; i++)
+				for (int j = 0; j < COLS; j++)
+					data_as_string += data[i][j];
 			return data_as_string;
 		}
 
@@ -49,8 +47,11 @@ namespace connect4
 	{
 		for (int i = 0; i < ROWS; i++)
 		{
-			if (lhs.data[i] != rhs.data[i])
-				return false;
+			for (int j = 0; j < COLS; j++)
+			{
+				if (lhs.data[i][j] != rhs.data[i][j])
+					return false;
+			}
 		}
 		return true;
 	}

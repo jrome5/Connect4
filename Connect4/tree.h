@@ -6,8 +6,7 @@
 
 typedef connect4::Board state;
 
-template <>
-struct std::hash<state>
+struct KeyHasher
 {
     size_t operator()(const state& k) const noexcept
     {
@@ -48,28 +47,29 @@ struct TreeNode : std::enable_shared_from_this<TreeNode>
                 child.reset();
             }
         }
-        for(auto& parent : parents)
-            parent.reset();
+        children.clear();
+        parents.clear();
     }
 
-    std::shared_ptr<TreeNode> addChildTransposition(std::unordered_map<state, std::shared_ptr<TreeNode>>& state_map, const int action, bool add_parent = true)
+    std::shared_ptr<TreeNode> addChildTransposition(std::unordered_map<state, std::shared_ptr<TreeNode>, KeyHasher>& state_map, const int action)
     {
         state new_state = this->data.current_state;
-        new_state.dropCoin(action, connect4::getCoin(not this->data.players_turn));
+        const bool players_turn = !this->data.players_turn;
+        new_state.dropCoin(action, connect4::getCoin(players_turn));
         auto state_it = state_map.find(new_state);
         if (state_it != state_map.end())
         {
             auto node = state_it->second;
             node->parents.emplace_back(std::shared_ptr<TreeNode>(shared_from_this()));
-            children.emplace_back(node);
+            this->children.emplace_back(node);
             return node;
         }
         else
         {
             //create new node
-            auto child = addChild(action, add_parent);
+            auto child = addChild(action);
             //add new node to map
-            state_map.emplace(new_state, child);
+            state_map.emplace(child->data.current_state, child);
             return child;
         }
     }
