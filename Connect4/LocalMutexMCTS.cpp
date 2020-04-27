@@ -18,13 +18,13 @@ namespace MCTS
 
 		void* threadFunction(void *args)
 		{
-			const int computational_limit = 10000;
+			const int computational_limit = 10000/NUM_THREADS;
 			int iterations = 0;
 			while (iterations < computational_limit)
 			{
-				root->mutex.lock();
+				root->lock();
 				std::shared_ptr<MutexNode> v0 = treePolicy(root);
-				root->mutex.unlock();
+				root->unlock();
 				auto vt = std::make_shared<TreeNode>(v0->data);
 				vt->depth = v0->depth;
 				const auto delta = defaultPolicy(vt);
@@ -171,10 +171,10 @@ namespace MCTS
 
 		void backPropagate(std::shared_ptr<MutexNode>& node, float delta)
 		{
-			node->mutex.lock();
+			node->lock();
 			node->data.visited += 1;
 			node->data.reward += delta;
-			node->mutex.unlock();
+			node->unlock();
 			if (node->parent)
 			{
 				backPropagate(node->parent, -delta);

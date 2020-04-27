@@ -15,6 +15,16 @@ struct NodeData
     bool terminal = false;
     bool fully_expanded = false;
     bool players_turn = false;
+
+    void addVirtualLoss()
+    {
+        visited -= 1;
+    }
+
+    void removeVirtualLoss()
+    {
+        visited += 1;
+    }
 };
 
 struct TreeNode : std::enable_shared_from_this<TreeNode>
@@ -85,6 +95,18 @@ struct MutexNode : std::enable_shared_from_this<MutexNode>
     MutexNode(const NodeData& node_data)
     {
         data = node_data;
+    }
+
+    void lock()
+    {
+        mutex.lock();
+        data.addVirtualLoss();
+    }
+
+    void unlock()
+    {
+        mutex.unlock();
+        data.removeVirtualLoss();
     }
 
     void remove()
