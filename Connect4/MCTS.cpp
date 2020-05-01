@@ -118,18 +118,16 @@ namespace MCTS
 
 	float MCTS::defaultPolicy(const std::shared_ptr<TreeNode> v0)
 	{
-		auto v = *v0;
-		std::vector<int> moves;
+		TreeNode v = *v0;
 		while (not v.data.terminal)
 		{
-			v.data.players_turn = !v.data.players_turn;
 			std::vector<int> available_actions = v.data.current_state.getAvailableMoves();
 			if (available_actions.size() == 0)
 			{
 				return 0;
 			}
 			const int action = chooseRandomAction(available_actions);
-			v = *v.addChild(action, false);
+			v.addSimChild(action);
 			v.data.terminal = (v.data.terminal or v.depth == MAX_TURNS);
 		}
 		const bool node_win = (v0->data.players_turn == v.data.players_turn);

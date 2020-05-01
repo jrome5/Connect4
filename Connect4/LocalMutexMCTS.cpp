@@ -16,15 +16,25 @@ namespace MCTS
 		constexpr int infinite = std::numeric_limits<int>::max();
 		std::shared_ptr<MutexNode> root;
 
+		void lock(std::shared_ptr<MutexNode>& node)
+		{
+			node->mutex.lock();
+			//node->data.addVirtualLoss();
+		}
+
+		void unlock(std::shared_ptr<MutexNode>& node)
+		{
+			//node->data.removeVirtualLoss();
+			node->mutex.unlock();
+		}
+
 		void* threadFunction(void *args)
 		{
-			const int computational_limit = 10000/NUM_THREADS;
+			const int computational_limit = 10000;
 			int iterations = 0;
 			while (iterations < computational_limit)
 			{
-				root->lock();
 				std::shared_ptr<MutexNode> v0 = treePolicy(root);
-				root->unlock();
 				auto vt = std::make_shared<TreeNode>(v0->data);
 				vt->depth = v0->depth;
 				const auto delta = defaultPolicy(vt);
@@ -122,6 +132,7 @@ namespace MCTS
 
 		std::shared_ptr<MutexNode> expand(std::shared_ptr<MutexNode>& v)
 		{
+			lock(v);
 			//choose action 'a' from untried actions
 			std::vector<int> actions = v->data.current_state.getAvailableMoves();
 			std::vector<int> available_actions;
@@ -136,6 +147,7 @@ namespace MCTS
 			if (available_actions.size() == 0)
 			{
 				v->data.fully_expanded = true;
+				unlock(v);
 				return v;
 			}
 			else
@@ -145,6 +157,7 @@ namespace MCTS
 				std::shared_ptr<MutexNode> n = v->addChild(chooseRandomAction(available_actions));
 				n->data.terminal = (n->data.terminal or n->depth == MAX_TURNS);
 				v->data.fully_expanded = v->children.size() == actions.size();
+				unlock(v);
 				return n;
 			}
 		}
@@ -152,17 +165,15 @@ namespace MCTS
 		float defaultPolicy(const std::shared_ptr<TreeNode> v0)
 		{
 			auto v = *v0;
-			std::vector<int> moves;
 			while (not v.data.terminal)
 			{
-				v.data.players_turn = !v.data.players_turn;
 				std::vector<int> available_actions = v.data.current_state.getAvailableMoves();
 				if (available_actions.size() == 0)
 				{
 					return 0;
 				}
 				const int action = chooseRandomAction(available_actions);
-				v = *v.addChild(action, false);
+				v.addSimChild(action);
 				v.data.terminal = (v.data.terminal or v.depth == MAX_TURNS);
 			}
 			const bool node_win = (v0->data.players_turn == v.data.players_turn);
@@ -171,10 +182,10 @@ namespace MCTS
 
 		void backPropagate(std::shared_ptr<MutexNode>& node, float delta)
 		{
-			node->lock();
+			lock(node);
 			node->data.visited += 1;
 			node->data.reward += delta;
-			node->unlock();
+			unlock(node);
 			if (node->parent)
 			{
 				backPropagate(node->parent, -delta);

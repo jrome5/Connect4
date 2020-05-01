@@ -21,7 +21,7 @@ namespace MCTS
 				return 0;
 			}
 			const int action = chooseRandomAction(available_actions);
-			v = *v.addChild(action, false);
+			v.addSimChild(action);
 			v.data.terminal = (v.data.terminal or v.depth == MAX_TURNS);
 		}
 		const bool node_win = (leaf_node->data.players_turn == v.data.players_turn);

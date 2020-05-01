@@ -18,12 +18,12 @@ struct NodeData
 
     void addVirtualLoss()
     {
-        visited -= 1;
+        reward -= 1;
     }
 
     void removeVirtualLoss()
     {
-        visited += 1;
+        reward += 1;
     }
 };
 
@@ -52,22 +52,27 @@ struct TreeNode : std::enable_shared_from_this<TreeNode>
         parent.reset();
     }
 
-    std::shared_ptr<TreeNode> addChild(const int action, bool add_parent=true)
+    std::shared_ptr<TreeNode> addChild(const int action)
     {
         NodeData data;
         data.action = action;
         auto child = std::make_shared<TreeNode>(data);
-        if (add_parent)
-        {
-            child->parent = std::shared_ptr<TreeNode>(shared_from_this());
-        }
+        child->parent = std::shared_ptr<TreeNode>(shared_from_this());
+        children.emplace_back(child);
         child->depth = this->depth+1;
         child->data.players_turn = !(this->data.players_turn);
         child->data.current_state = this->data.current_state;
         child->data.current_state.dropCoin(child->data.action, connect4::getCoin(child->data.players_turn));
         child->data.terminal = isNodeTerminal();
-        children.emplace_back(child);
         return child;
+    }
+
+    void addSimChild(const int action)
+    {
+        this->depth += 1;
+        data.players_turn = !data.players_turn;
+        data.current_state.dropCoin(action, connect4::getCoin(data.players_turn));
+        data.terminal = isNodeTerminal();
     }
 
     bool isNodeTerminal()
@@ -95,18 +100,6 @@ struct MutexNode : std::enable_shared_from_this<MutexNode>
     MutexNode(const NodeData& node_data)
     {
         data = node_data;
-    }
-
-    void lock()
-    {
-        mutex.lock();
-        data.addVirtualLoss();
-    }
-
-    void unlock()
-    {
-        mutex.unlock();
-        data.removeVirtualLoss();
     }
 
     void remove()
