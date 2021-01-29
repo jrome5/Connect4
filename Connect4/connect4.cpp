@@ -1,215 +1,267 @@
-#include <iostream>
 #include "connect4.h"
-using namespace std;
+#include "MCTS.h"
+#include <iostream>
+#include <stdlib.h>  //rand
+#include <fstream>
 
-void initializeBoard(Board& board)
-{
-	for (int i = 0; i < ROWS; i++)
-	{
-		for (int j = 0; j < COLS; j++)
-			board[i][j] = ' ';
-	}
-}
+using std::cout;
+int plays = 0;
+int random_wins = 0;
+int mcts_wins = 0;
 
-void dropCoin(Board& board, const int choice, const char coin)
+namespace connect4
 {
-	for (int i = 0; i < ROWS; i++)
+	void initializeBoard(Board& board)
 	{
-		if (board[i][choice] == ' ')
-		{
-			board[i][choice] = coin;
-			return;
-		}
-	}
-}
-
-void display(Board& board)
-{
-	system("cls");
-	cout << " 0   1   2   3   4   5   6\n";
-	for (int i = ROWS - 1; i >= 0; i--)
-	{
-		for (int j = 0; j < COLS; j++) cout << char(218) << char(196) << char(191) << " ";
-		cout << '\n';
-		for (int j = 0; j < COLS; j++) cout << char(179) << board[i][j] << char(179) << " ";
-		cout << '\n';
-		for (int j = 0; j < COLS; j++) cout << char(192) << char(196) << char(217) << " ";
-		cout << '\n';
-	}
-}
-
-int makeRandomDecision(Board& board)
-{
-	vector<int> available_moves;
-	for (int j = 0; j < COLS; j++)
-		if (board[ROWS - 1][j] == ' ')
-			available_moves.push_back(j);
-	if (available_moves.size() == 0)
-	{
-		return -1;
-	}
-	const int random_choice = rand() % available_moves.size();
-	return available_moves[random_choice];
-}
-
-bool checkWinner(const Board& board, const char coin)
-{
-	if (checkVertical(board, coin))
-		return true;
-	if (checkHorizontal(board, coin))
-		return true;
-	if (checkForwardDiagonal(board, coin))
-		return true;
-	if (checkBackDiagonal(board, coin))
-		return true;
-	return false;
-}
-
-bool checkForwardDiagonal(const Board& board, const char coin)
-{
-	for (int i = 0; i < ROWS - 3; i++)
-	{
-		for (int j = 0; j < COLS - 3; j++)
-		{
-			if (board[i + 3][j] == board[i + 2][j + 1]
-				&& board[i + 2][j + 1] == board[i + 1][j + 2]
-				&& board[i + 1][j + 2] == board[i][j + 3]
-				&& board[i][j + 3] == coin)
-				return true;
-		}
-	}
-	return false;
-}
-bool checkBackDiagonal(const Board& board, const char coin)
-{
-	for (int i = 0; i < ROWS - 3; i++)
-	{
-		for (int j = 0; j < COLS - 3; j++)
-		{
-			if (board[i][j] == board[i + 1][j + 1]
-				&& board[i + 1][j + 1] == board[i + 2][j + 2]
-				&& board[i + 2][j + 2] == board[i + 3][j + 3]
-				&& board[i + 3][j + 3] == coin)
-				return true;
-		}
-	}
-	return false;
-}
-
-bool checkHorizontal(const Board& board, const char coin)
-{
-	for (int i = 0; i < ROWS; i++)
-	{
-		int coin_coint = 0;
-		for (int j = 0; j < COLS; j++)
-		{
-			if (board[i][j] == coin)
-			{
-				coin_coint++;
-				if (coin_coint == 4)
-				{
-					return true;
-				}
-			}
-			else
-			{
-				coin_coint = 0;
-			}
-		}
-	}
-	return false;
-}
-
-bool checkVertical(const Board& board, const char coin)
-{
-	for (int j = 0; j < COLS; j++)
-	{
-		int coin_count = 0;
 		for (int i = 0; i < ROWS; i++)
 		{
-			if (board[i][j] == ' ')
+			for (int j = 0; j < COLS; j++)
+				board[i][j] = ' ';
+		}
+	}
+
+	void dropCoin(Board& board, const int choice, const char coin)
+	{
+		for (int i = 0; i < ROWS; i++)
+		{
+			if (board[i][choice] == ' ')
 			{
-				continue;
+				board[i][choice] = coin;
+				return;
 			}
-			if (board[i][j] == coin)
+		}
+	}
+
+	void display(const Board& board)
+	{
+		system("cls");
+		cout << " 0   1   2   3   4   5   6\n";
+		for (int i = ROWS - 1; i >= 0; i--)
+		{
+			for (int j = 0; j < COLS; j++) cout << char(218) << char(196) << char(191) << " ";
+			cout << '\n';
+			for (int j = 0; j < COLS; j++) cout << char(179) << board[i][j] << char(179) << " ";
+			cout << '\n';
+			for (int j = 0; j < COLS; j++) cout << char(192) << char(196) << char(217) << " ";
+			cout << '\n';
+		}
+	}
+
+	int makeRandomDecision(const Board& board)
+	{
+		std::vector<int> available_moves = getAvailableMoves(board);
+		if (available_moves.size() == 0)
+		{
+			return -1;
+		}
+		const int random_choice = rand() % available_moves.size();
+		return available_moves[random_choice];
+	}
+
+	std::vector<int> getAvailableMoves(const Board& board)
+	{
+		std::vector<int> available_moves;
+		for (int j = 0; j < COLS; j++)
+			if (board[ROWS - 1][j] == ' ')
 			{
-				coin_count++;
-				if (coin_count == 4)
-				{
+				available_moves.push_back(j);
+         	}
+		return available_moves;
+	}
+
+	bool checkMoveValid(const Board& board, const int player_move)
+	{
+		const auto available_moves = getAvailableMoves(board);
+		for (auto move : available_moves)
+		{
+			if (move == player_move)
+				return true;
+		}
+		return false;
+	}
+
+	bool checkWinner(const Board& board, const char coin)
+	{
+		if (checkVertical(board, coin))
+			return true;
+		if (checkHorizontal(board, coin))
+			return true;
+		if (checkForwardDiagonal(board, coin))
+			return true;
+		if (checkBackDiagonal(board, coin))
+			return true;
+		return false;
+	}
+
+	bool checkForwardDiagonal(const Board& board, const char coin)
+	{
+		for (int i = 0; i < ROWS - 3; i++)
+		{
+			for (int j = 0; j < COLS - 3; j++)
+			{
+				if (board[i + 3][j] == board[i + 2][j + 1]
+					&& board[i + 2][j + 1] == board[i + 1][j + 2]
+					&& board[i + 1][j + 2] == board[i][j + 3]
+					&& board[i][j + 3] == coin)
 					return true;
+			}
+		}
+		return false;
+	}
+	bool checkBackDiagonal(const Board& board, const char coin)
+	{
+		for (int i = 0; i < ROWS - 3; i++)
+		{
+			for (int j = 0; j < COLS - 3; j++)
+			{
+				if (board[i][j] == board[i + 1][j + 1]
+					&& board[i + 1][j + 1] == board[i + 2][j + 2]
+					&& board[i + 2][j + 2] == board[i + 3][j + 3]
+					&& board[i + 3][j + 3] == coin)
+					return true;
+			}
+		}
+		return false;
+	}
+
+	bool checkHorizontal(const Board& board, const char coin)
+	{
+		for (int i = 0; i < ROWS; i++)
+		{
+			int coin_coint = 0;
+			for (int j = 0; j < COLS; j++)
+			{
+				if (board[i][j] == coin)
+				{
+					coin_coint++;
+					if (coin_coint == 4)
+					{
+						return true;
+					}
+				}
+				else
+				{
+					coin_coint = 0;
 				}
 			}
-			else
+		}
+		return false;
+	}
+
+	bool checkVertical(const Board& board, const char coin)
+	{
+		for (int j = 0; j < COLS; j++)
+		{
+			int coin_count = 0;
+			for (int i = 0; i < ROWS; i++)
 			{
-				coin_count = 0;
+				if (board[i][j] == ' ')
+				{
+					continue;
+				}
+				if (board[i][j] == coin)
+				{
+					coin_count++;
+					if (coin_count == 4)
+					{
+						return true;
+					}
+				}
+				else
+				{
+					coin_count = 0;
+				}
+			}
+		}
+		return false;
+	}
+
+	int playGame()
+	{
+		Board board;
+		initializeBoard(board);
+		display(board);
+		int coin_count = 0;
+		bool no_winner = true;
+		bool players_turn = false;
+		MCTS::MCTS cpu;
+		while (true)
+		{
+			if (coin_count == MAX_COINS)
+			{
+				return 0;
+			}
+			//player choose
+			players_turn = true;
+			//cout << "Please enter value 0->6\n";
+			int player_choice = makeRandomDecision(board);
+			bool move_valid = false;
+	/*		while (!move_valid)
+			{
+				std::cin >> player_choice;
+				cout << "Invalid move, please enter value 0->6" << std::endl;
+				move_valid = checkMoveValid(board, player_choice);
+			}*/
+			dropCoin(board, player_choice, player_coin);
+			coin_count++;
+			display(board);
+			if (checkWinner(board, player_coin))
+			{
+				random_wins++;
+				return -1;
+			}
+		
+
+			//computer choose
+			players_turn = false;
+			cout << "Computer is choosing";
+			const int turns_remaining = MAX_COINS - coin_count;
+			const int computer_choice = cpu.search(board, turns_remaining);
+			if (computer_choice == -1)
+			{
+				cout << "this shouldnt happen";
+				return 0;
+			}
+			dropCoin(board, computer_choice, computer_coin);
+			coin_count++;
+			display(board);
+			if (checkWinner(board, computer_coin))
+			{
+				mcts_wins++;
+				return 1;
 			}
 		}
 	}
-	return false;
-}
-
-string playGame()
-{
-	Board board;
-	initializeBoard(board);
-	display(board);
-	int coin_count = 0;
-	bool no_winner = true;
-	bool players_turn = false;
-
-	while (true)
-	{
-		if (coin_count == MAX_COINS)
-		{
-			return "draw";
-		}
-		//player choose
-		players_turn = true;
-		cout << "Please enter value 0->6\n";
-		int player_choice;
-		cin >> player_choice;
-		dropCoin(board, player_choice, player_coin);
-		coin_count++;
-		display(board);
-		if (checkWinner(board, player_coin))
-		{
-			return "player";
-		}
-		//computer choose
-		players_turn = false;
-		cout << "Computer is choosing";
-		const int computer_choice = makeRandomDecision(board);
-		if (computer_choice == -1)
-		{
-			cout << "this shouldnt happen";
-			return "draw";
-		}
-		dropCoin(board, computer_choice, computer_coin);
-		coin_count++;
-		display(board);
-		if (checkWinner(board, computer_coin))
-		{
-			return "computer";
-		}
-	}
-}
+} //end namespace connect4
 
 int main()
 {
-	char replay = 'y';
-	while (replay == 'y')
+	std::ofstream results_file;
+	results_file.open("MCTS vs random 100 plays.csv");
+	results_file << "Game, Win, Draw, Loss\n";
+	//char replay = 'y';
+	for(int i = 0; i < 100; i++)
 	{
-		const string winner = playGame();
-		if (winner == "draw")
+		const auto winner = connect4::playGame();
+		switch (winner)
 		{
-			cout << "Draw. No winner.";
+			case -1:
+				results_file << i << ",0,0,1\n";
+				break;
+			case 1:
+				results_file << i << ",1,0,0\n";
+				break;
+			default:
+				results_file << i << ",0,1,0\n";
+				break;
 		}
-		else
+		if (i % 10)
 		{
-			cout << "The winner is " << winner << "!!!\n";
+			results_file.close();
+			results_file.open("MCTS vs random 100 plays.csv");
 		}
-		cout << "Play again? y/n \n";
-		cin >> replay;
+	//	cout << "Play again? y/n \n";
+		//std::cin >> replay;
 	}
-	return 1;
+	return 0;
 }
